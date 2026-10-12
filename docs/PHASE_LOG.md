@@ -8,9 +8,8 @@ blocked — not rewritten afterward to look cleaner.
 
 ## Phase 1 — Pure scaffold
 
-**Status:** Written, **NOT YET VERIFIED**. Do not treat this as "done"
-until the manual QA steps below have actually been run and the real output
-reported back.
+**Status:** ✅ VERIFIED AND COMPLETE. Repo:
+https://github.com/monja14-dev/nk-travel-agent (branch `main`).
 
 **Context:** attempted first from the cloud sandbox session; blocked
 because that sandbox's egress policy returns 403 for `registry.npmjs.org`
@@ -115,8 +114,19 @@ not start until Phase 1 is reported as actually green.
   3. `src/db/migrations.ts` had `tx` typed as plain `string[]` instead of
      the real store-name union — a straightforward bug, not a TS
      limitation. Fixed to use the same `StoreName` type as client.ts.
-- `npm run build`, attempt 2: pending owner's re-run.
+- `npm run build`, attempt 2: **failed**, 5 remaining errors — the
+  `StoreName` fix from attempt 1 didn't actually work. `keyof
+  NkTravelAgentDB & string` collapsed to plain `string` rather than the
+  literal union of store names, because `NkTravelAgentDB` extends idb's
+  `DBSchema`, which carries a string index signature that absorbs the
+  specific keys under `keyof` — confirmed directly from the compiler's own
+  error output, not assumed. Fixed by writing the `StoreName` union out
+  explicitly (11 literals) instead of deriving it.
+- `npm run build`, attempt 3: **passed**. `tsc -b` clean, `vite build`
+  produced `dist/` (index.html, ~6.3kB CSS, ~149kB JS before gzip) in
+  1.45s. Owner ran this, pasted real output.
 
-This is the expected shape of Phase 1 — written code has real compile
-errors, they get fixed, re-verified. Nothing here was guessed; every fix
-above traces to an exact compiler error in the owner's pasted output.
+This is the expected shape of Phase 1 — written code had real compile
+errors across two rounds, including one case where my own fix was wrong
+on the first try. Each fix traces to an exact compiler error in the
+owner's pasted output, not a guess.
