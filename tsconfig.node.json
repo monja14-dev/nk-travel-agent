@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    // A referenced project in a TS project-reference build (`tsc -b`)
+    // cannot set `noEmit` (TS6310 — tried that first, it's a hard error).
+    // Redirecting the output into node_modules/ instead keeps it out of
+    // the project root without fighting that constraint; node_modules/ is
+    // already gitignored, so nothing from this ever needs committing.
+    "outDir": "node_modules/.tsbuild-node",
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "strict": true
+  },
+  "include": ["vite.config.ts", "vitest.config.ts"]
+}
