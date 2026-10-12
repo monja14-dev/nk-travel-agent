@@ -49,6 +49,13 @@ const migrations: Record<number, MigrationFn> = {
 
     db.createObjectStore("backupMeta", { keyPath: "id" });
   },
+  2: (db) => {
+    const accommodationResults = db.createObjectStore("accommodationResults", { keyPath: "id" });
+    accommodationResults.createIndex("by-trip", "tripId");
+
+    const foodResults = db.createObjectStore("foodResults", { keyPath: "id" });
+    foodResults.createIndex("by-trip", "tripId");
+  },
 };
 
 export function runMigrations(

@@ -12,4 +12,12 @@ export type View =
   | { name: "trip-details"; tripId: string }
   | { name: "trip-edit"; tripId: string }
   | { name: "trip-override"; tripId: string }
-  | { name: "profile" };
+  | { name: "trip-ai"; tripId: string }
+  | { name: "trip-accommodation"; tripId: string }
+  | { name: "trip-food"; tripId: string }
+  | { name: "trip-itinerary"; tripId: string }
+  | { name: "trip-budget"; tripId: string }
+  | { name: "trip-bookings"; tripId: string }
+  | { name: "trip-reminders"; tripId: string }
+  | { name: "profile" }
+  | { name: "backup" };

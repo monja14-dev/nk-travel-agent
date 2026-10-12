@@ -49,8 +49,28 @@ function validateBackupPayload(payload: unknown): asserts payload is BackupPaylo
 
   const data = p.data as Record<string, unknown>;
   for (const storeName of ALL_STORE_NAMES) {
-    if (storeName in data && !Array.isArray(data[storeName])) {
+    if (!(storeName in data)) continue;
+    const records = data[storeName];
+    if (!Array.isArray(records)) {
       throw new InvalidBackupError(`Backup's "${storeName}" entry is not an array.`);
+    }
+    // Phase 6 fix: every store's keyPath is "id" (see migrations.ts).
+    // Checking only "is this an array" let a shape-valid-but-content-
+    // invalid backup (e.g. a hand-edited file, or one truncated by a
+    // text editor into `{"foo":"bar"}` records) reach the destructive
+    // restore step below — `store.put()` on a record missing its own
+    // keyPath throws a raw IndexedDB DataError, aborting the whole
+    // restore transaction (every store's contents, not just this one)
+    // with a confusing low-level error instead of the clean,
+    // nothing-was-touched-yet InvalidBackupError this function exists to
+    // give. Checking it here, before the transaction ever opens, is
+    // cheap and catches the same class of malformed input the shape
+    // check above already catches for the array itself.
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
+      if (typeof record !== "object" || record === null || typeof (record as Record<string, unknown>).id !== "string") {
+        throw new InvalidBackupError(`Backup's "${storeName}" entry ${i} is missing a valid "id".`);
+      }
     }
   }
 }

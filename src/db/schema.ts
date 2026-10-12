@@ -18,7 +18,7 @@
  * by the master prompt's local-first data integrity rules.
  */
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export type ISODateString = string; // "2027-02-10"
 export type ISODateTimeString = string; // full ISO 8601 timestamp
@@ -91,20 +91,66 @@ export interface ItineraryItem extends BaseRecord {
   order: number; // explicit ordering within the day, since times can cross midnight
   startTime?: string; // "HH:MM", 24h
   endTime?: string; // "HH:MM", 24h — may be < startTime when the block crosses midnight
+  /** True when THIS item's own end time is on the calendar day after its
+   * own start time — a single continuous block straddling midnight (e.g.
+   * a 23:35→02:00 overnight flight). Unchanged from Phase 1: explicit,
+   * never inferred from `endTime < startTime`, since that comparison
+   * alone can't distinguish "crosses midnight" from "ends earlier than
+   * it starts by mistake." */
   crossesMidnight: boolean;
+  /**
+   * Phase 5: true when this item's *start* is understood to be on the
+   * calendar day after the previous item in this day's sequence — e.g.
+   * the real Taiwan_041026.xlsx baseline logs an evening block
+   * ("Preparation for rest", 23:01–23:59) and then a *separate* row
+   * ("Rest", 00:00–06:00) rather than one block spanning both. Neither
+   * row's own start/end crosses midnight, but the second one is clearly
+   * "the next day" relative to the first. Comparing wall-clock times
+   * alone can't tell that apart from a genuine same-day scheduling
+   * overlap (two items that are just out of order) — the exact ambiguity
+   * `crossesMidnight` was already introduced to avoid — so this is a
+   * second explicit, stored flag rather than a heuristic. Defaults to
+   * false; irrelevant (a no-op) on the first item of a day.
+   * modules/itinerary/timeline.ts is the one place that reads both flags
+   * to reconstruct an absolute timeline for duration/conflict purposes.
+   */
+  newCalendarDay: boolean;
   durationMinutes?: number;
+  /** Time to get TO this item's location, kept separate from
+   * `durationMinutes` (the activity's own length) and separate from
+   * whether a dedicated `category: "transport"` item also exists for the
+   * leg — useful for a quick hop not worth its own row. */
+  travelTimeMinutes?: number;
   category: ItineraryItemCategory;
   title: string;
   description?: string;
   address?: string;
   transportNotes?: string; // "How to get there", from the reference workbook
+  /** Free text, not a structured schedule — real opening hours vary too
+   * much (seasonal, day-of-week, "till 5pm only") for a fixed shape,
+   * same reasoning as AccommodationResult.cancellationPolicy (Phase 4). */
+  openingHours?: string;
   bookingStatus: BookingStatus;
-  plannedCost?: number;
-  actualCost?: number;
+  /** Transport fare for getting to/through this item, kept separate from
+   * the activity's own admission/ticket cost below — the master prompt
+   * asks for "fare" and "activity cost" as distinct figures, each with
+   * its own planned-vs-actual pair. Renamed from Phase 1's single
+   * plannedCost/actualCost (never used by any shipped UI or repo before
+   * this phase — confirmed by search — so renaming here is safe). */
+  farePlanned?: number;
+  fareActual?: number;
+  activityCostPlanned?: number;
+  activityCostActual?: number;
   currency?: string;
-  sourceUrl?: string;
-  verifiedAt?: ISODateTimeString;
-  comments?: string;
+  /** Where this item's details (price, hours, address) came from, and
+   * how much to trust them — reuses Phase 4's ResultAttribution rather
+   * than the old bare `sourceUrl`/`verifiedAt` pair, for the same
+   * uniform verification-status display `getDisplayVerificationStatus`
+   * already provides. Optional: a purely personal block ("Rest",
+   * "Brunch") genuinely has no source to attribute and shouldn't be
+   * forced to fake one. */
+  attribution?: ResultAttribution;
+  comments?: string; // true secondary notes (tips, booking reminders) — `description` is the activity's own text
   actualStatus?: "planned" | "done" | "skipped" | "modified";
 }
 
@@ -175,4 +221,85 @@ export interface BackupMeta {
   lastBackupAt?: ISODateTimeString;
   lastRestoreAt?: ISODateTimeString;
   lastSafetyBackupAt?: ISODateTimeString;
+}
+
+// ---------------------------------------------------------------------
+// Phase 4 — accommodation & food research results
+//
+// Deliberately separate stores from the Phase 1 `ResearchSource` stub
+// above, not an extension of it: ResearchSource is a thin citation log
+// (topic/url/notes) with no price, rating, or dish fields, and nothing
+// has written to it in Phases 1–3. Rather than overload its shape, each
+// result below embeds its own attribution (reusing
+// `ResearchVerificationStatus` from above) directly — the same pattern
+// `ItineraryItem` already uses for `sourceUrl`/`verifiedAt`, just with a
+// named sub-object since there's more to attribute here (a status, a
+// human-readable provenance label, not just a URL).
+
+/** Where a result's data came from and how much to trust it. Embedded
+ * directly on each result rather than a foreign key to ResearchSource —
+ * see the comment above. `retrievedAt` is always set (never omitted),
+ * since "when was this captured" is what lets
+ * modules/research/verification.ts's getDisplayVerificationStatus()
+ * detect data that's quietly gone out of date even if it was accurate
+ * when saved. */
+export interface ResultAttribution {
+  sourceLabel: string; // e.g. "Manually researched", "Google Places" (once/if a live adapter exists)
+  sourceUrl?: string; // absent is valid — not every finding has one page to point at
+  retrievedAt: ISODateTimeString;
+  verificationStatus: ResearchVerificationStatus;
+}
+
+/** A fee that isn't part of the quoted nightly rate but is unavoidable —
+ * environmental fee, resort fee, cleaning fee, etc. `amount` is left
+ * undefined (not 0) when the fee is known to exist but its amount isn't
+ * confirmed — the master prompt's "never invent" rule applies to a
+ * fabricated number just as much as a fabricated price. */
+export interface MandatoryFee {
+  label: string;
+  amount?: number;
+  currency?: string;
+  notes?: string;
+}
+
+export type AccommodationPropertyType = "hotel" | "resort" | "airbnb" | "hostel" | "other";
+
+export interface AccommodationResult extends BaseRecord {
+  tripId: string;
+  name: string;
+  propertyType?: AccommodationPropertyType;
+  location?: string; // free-text area/address — not a fixed enum, matches how this is actually described
+  mapUrl?: string;
+  /** Absent, not 0, when the price isn't known/researched yet — a 0
+   * would read as "free," which is never actually true here. */
+  pricePerNight?: number;
+  currency?: string;
+  mandatoryFees: MandatoryFee[]; // [] (not undefined) when none are known, so the UI can render it unconditionally
+  cancellationPolicy?: string; // free text — terms vary too widely across listings for a fixed enum
+  rating?: number;
+  ratingScale?: number; // the scale `rating` is out of (5, 10, ...) — sources disagree, so this isn't assumed
+  reviewCount?: number;
+  notes?: string;
+  attribution: ResultAttribution;
+}
+
+/** The five Food Hunter categories the chat-based agent already used
+ * (EXISTING_AGENT_CAPABILITIES.md) — fixed, not user-definable, since
+ * the Food Hunter screen is organized around exactly these five. */
+export type FoodHunterCategory = "must-try" | "local-favorites" | "hidden-gems" | "budget-eats" | "special-occasions";
+
+export interface FoodResult extends BaseRecord {
+  tripId: string;
+  name: string;
+  category: FoodHunterCategory;
+  dishes: string[]; // [] when no specific dish is known yet — still worth saving the venue
+  cuisine?: string;
+  priceRange?: string; // free text ("~300-500 PHP/person") — this is how the info is actually found, not a single number
+  location?: string;
+  mapUrl?: string;
+  rating?: number;
+  ratingScale?: number;
+  reviewCount?: number;
+  notes?: string;
+  attribution: ResultAttribution;
 }

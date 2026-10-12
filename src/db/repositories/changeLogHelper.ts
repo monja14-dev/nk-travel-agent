@@ -1,3 +1,4 @@
+import { getReadyDb } from "../client";
 import type { ChangeLogEntry } from "../schema";
 import { generateId } from "../../lib/id";
 import { nowIso } from "../../lib/time";
@@ -25,4 +26,15 @@ export function buildChangeLogEntry(params: {
     after: params.after,
     timestamp: nowIso(),
   };
+}
+
+/**
+ * Phase 5: full change history for a trip, newest first — used by the
+ * XLSX export's Change Log sheet. Not used by any UI screen yet (no
+ * change-log viewer has been built); this is the first reader of the
+ * `changeLog` store's `by-trip` index.
+ */
+export async function listChangeLogForTrip(tripId: string): Promise<ChangeLogEntry[]> {
+  const entries = await getReadyDb().getAllFromIndex("changeLog", "by-trip", tripId);
+  return [...entries].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 }

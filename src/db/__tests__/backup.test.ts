@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { initDb } from "../client";
+import { initDb, ALL_STORE_NAMES } from "../client";
 import { exportBackup, restoreBackup } from "../backup";
 import { createTrip, getTrip, listTrips } from "../repositories/tripsRepo";
 import { getOrCreateDefaultProfile, updateProfile } from "../repositories/travelerProfilesRepo";
@@ -83,20 +83,11 @@ describe("backup — export/restore round trip", () => {
 
   it("exportBackup covers every known store, even when empty", async () => {
     const backup = await exportBackup();
-    expect(Object.keys(backup.data).sort()).toEqual(
-      [
-        "trips",
-        "travelerProfiles",
-        "tripOverrides",
-        "itineraryDays",
-        "itineraryItems",
-        "expenses",
-        "bookings",
-        "researchSources",
-        "reminders",
-        "changeLog",
-        "backupMeta",
-      ].sort(),
-    );
+    // Compared against the live ALL_STORE_NAMES rather than a hardcoded
+    // list — a future phase adding another store shouldn't require
+    // remembering to update this assertion too; it already would have
+    // needed to add that store to ALL_STORE_NAMES for backup/restore to
+    // cover it at all, which is what this test actually verifies.
+    expect(Object.keys(backup.data).sort()).toEqual([...ALL_STORE_NAMES].sort());
   });
 });

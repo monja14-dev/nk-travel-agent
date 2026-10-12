@@ -58,6 +58,11 @@ describe("tripsRepo — CRUD", () => {
 
   it("updates a trip, bumping its revision and updatedAt", async () => {
     const trip = await createTrip(sampleInput());
+    // nowIso() has millisecond resolution; on a fast machine the create and
+    // update below can otherwise land in the same millisecond, making this
+    // assertion flaky even though the real conflict-detection field
+    // (revision) is correct either way. A tiny delay makes the clock tick.
+    await new Promise((resolve) => setTimeout(resolve, 2));
     const updated = await updateTrip(trip.id, { name: "Boracay Honeymoon (Updated)" }, trip.revision);
 
     expect(updated.revision).toBe(2);

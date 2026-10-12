@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    // Same reasoning as tsconfig.node.json: a referenced project in a
+    // `tsc -b` build can't set `noEmit` (TS6310), so output is redirected
+    // into node_modules/ instead, which is already gitignored.
+    "outDir": "node_modules/.tsbuild-api",
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // Deliberately NOT adding "node" here: api/_lib/__tests__ imports
+    // node:fs/node:path/node:url explicitly, which resolves fine via
+    // @types/node's module declarations regardless of this list (that
+    // option only gates *automatic* global inclusion, not explicit
+    // imports) — and avoiding it sidesteps @types/node's global fetch/
+    // Request/Response declarations colliding with the "DOM" lib ones
+    // already used by anthropicClient.ts. The one real gap (the bare
+    // `process` global in api/ai-chat.ts) is covered by a narrow local
+    // ambient declaration instead — see api/_lib/env.d.ts.
+    "types": ["vitest/globals"]
+  },
+  "include": ["api"]
+}

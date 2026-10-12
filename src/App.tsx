@@ -6,6 +6,14 @@ import TripForm from "./modules/trips/TripForm";
 import TripDetails from "./modules/trips/TripDetails";
 import TripOverrideForm from "./modules/trips/TripOverrideForm";
 import ProfileForm from "./modules/profile/ProfileForm";
+import AiChatPanel from "./modules/ai/AiChatPanel";
+import AccommodationComparison from "./modules/research/AccommodationComparison";
+import FoodHunter from "./modules/research/FoodHunter";
+import ItineraryPlanner from "./modules/itinerary/ItineraryPlanner";
+import BudgetTracker from "./modules/budget/BudgetTracker";
+import BookingsTracker from "./modules/bookings/BookingsTracker";
+import RemindersChecklist from "./modules/reminders/RemindersChecklist";
+import BackupRestore from "./modules/backup/BackupRestore";
 
 /**
  * Phase 2: the db-status gate from Phase 1 is unchanged — writes stay
@@ -72,6 +80,9 @@ export default function App() {
             <button type="button" onClick={() => setView({ name: "profile" })} className="text-slate-600">
               Profile
             </button>
+            <button type="button" onClick={() => setView({ name: "backup" })} className="text-slate-600">
+              Backup
+            </button>
           </nav>
         </div>
       </header>
@@ -79,10 +90,31 @@ export default function App() {
       <main>
         {view.name === "dashboard" && <Dashboard onNavigate={setView} />}
         {view.name === "trip-new" && <TripForm onNavigate={setView} />}
-        {view.name === "trip-edit" && <TripForm tripId={view.tripId} onNavigate={setView} />}
-        {view.name === "trip-details" && <TripDetails tripId={view.tripId} onNavigate={setView} />}
-        {view.name === "trip-override" && <TripOverrideForm tripId={view.tripId} onNavigate={setView} />}
+        {view.name === "trip-edit" && <TripForm key={view.tripId} tripId={view.tripId} onNavigate={setView} />}
+        {view.name === "trip-details" && <TripDetails key={view.tripId} tripId={view.tripId} onNavigate={setView} />}
+        {view.name === "trip-override" && <TripOverrideForm key={view.tripId} tripId={view.tripId} onNavigate={setView} />}
+        {/* key={view.tripId}: Phase 6 trip-isolation hardening. Without
+            it, if any future change ever let `view` go directly from one
+            trip's "trip-ai"/etc. to another's without an intervening
+            unmount, React would reuse this component instance and its
+            in-memory state (chat history, pending proposal cards, form
+            drafts) across trips instead of resetting it. Today's
+            navigation always unmounts in between, so this isn't
+            currently exploitable — it's defense-in-depth, the same
+            posture the rest of this app takes toward trip isolation. */}
+        {view.name === "trip-ai" && <AiChatPanel key={view.tripId} tripId={view.tripId} onNavigate={setView} />}
+        {view.name === "trip-accommodation" && (
+          <AccommodationComparison key={view.tripId} tripId={view.tripId} onNavigate={setView} />
+        )}
+        {view.name === "trip-food" && <FoodHunter key={view.tripId} tripId={view.tripId} onNavigate={setView} />}
+        {view.name === "trip-itinerary" && <ItineraryPlanner key={view.tripId} tripId={view.tripId} onNavigate={setView} />}
+        {view.name === "trip-budget" && <BudgetTracker key={view.tripId} tripId={view.tripId} onNavigate={setView} />}
+        {view.name === "trip-bookings" && <BookingsTracker key={view.tripId} tripId={view.tripId} onNavigate={setView} />}
+        {view.name === "trip-reminders" && (
+          <RemindersChecklist key={view.tripId} tripId={view.tripId} onNavigate={setView} />
+        )}
         {view.name === "profile" && <ProfileForm onNavigate={setView} />}
+        {view.name === "backup" && <BackupRestore onNavigate={setView} />}
       </main>
     </div>
   );

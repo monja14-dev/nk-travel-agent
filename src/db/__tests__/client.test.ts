@@ -20,13 +20,23 @@ describe("db client", () => {
   });
 
   it("creates all stores from the Phase 1 migration (schema version 1)", async () => {
-    expect(SCHEMA_VERSION).toBe(1);
     // Exercises the store the migration should have created — if the
     // migration didn't run, this transaction throws immediately.
     const result = await withWriteTransaction(["trips"], async (tx) => {
       return tx.objectStore("trips").count();
     });
     expect(result).toBe(0);
+  });
+
+  it("creates the Phase 4 stores from the version-2 migration", async () => {
+    expect(SCHEMA_VERSION).toBe(2);
+    const result = await withWriteTransaction(["accommodationResults", "foodResults"], async (tx) => {
+      return Promise.all([
+        tx.objectStore("accommodationResults").count(),
+        tx.objectStore("foodResults").count(),
+      ]);
+    });
+    expect(result).toEqual([0, 0]);
   });
 
   it("round-trips a trip record and preserves its fields", async () => {

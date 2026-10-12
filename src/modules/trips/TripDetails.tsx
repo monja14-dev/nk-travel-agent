@@ -21,6 +21,7 @@ export default function TripDetails({ tripId, onNavigate }: TripDetailsProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionPending, setActionPending] = useState(false);
+  const [exportPending, setExportPending] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,6 +78,25 @@ export default function TripDetails({ tripId, onNavigate }: TripDetailsProps) {
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
       setActionPending(false);
+    }
+  }
+
+  async function handleExport() {
+    if (!trip) return;
+    setExportPending(true);
+    setActionError(null);
+    try {
+      // Dynamic import, not a top-level one: exceljs is a large library
+      // (it roughly 5x'd the production bundle when imported statically —
+      // see vite's own chunk-size warning) and the vast majority of page
+      // loads never click this button. This keeps exceljs out of the main
+      // bundle entirely, in its own chunk fetched only on first use.
+      const { downloadTripXlsx } = await import("../export/exportTrip");
+      await downloadTripXlsx(trip.id);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setExportPending(false);
     }
   }
 
@@ -138,6 +158,22 @@ export default function TripDetails({ tripId, onNavigate }: TripDetailsProps) {
         </ActionButton>
         <ActionButton onClick={() => onNavigate({ name: "trip-override", tripId: trip.id })}>
           Edit trip preferences
+        </ActionButton>
+        <ActionButton onClick={() => onNavigate({ name: "trip-ai", tripId: trip.id })}>Ask NK AI</ActionButton>
+        <ActionButton onClick={() => onNavigate({ name: "trip-accommodation", tripId: trip.id })}>
+          Accommodation Options
+        </ActionButton>
+        <ActionButton onClick={() => onNavigate({ name: "trip-food", tripId: trip.id })}>Food Hunter</ActionButton>
+        <ActionButton onClick={() => onNavigate({ name: "trip-itinerary", tripId: trip.id })}>
+          Detailed Itinerary
+        </ActionButton>
+        <ActionButton onClick={() => onNavigate({ name: "trip-budget", tripId: trip.id })}>Budget</ActionButton>
+        <ActionButton onClick={() => onNavigate({ name: "trip-bookings", tripId: trip.id })}>Bookings</ActionButton>
+        <ActionButton onClick={() => onNavigate({ name: "trip-reminders", tripId: trip.id })}>
+          Reminders
+        </ActionButton>
+        <ActionButton onClick={handleExport} disabled={exportPending}>
+          {exportPending ? "Exporting…" : "Export to Excel"}
         </ActionButton>
       </div>
 

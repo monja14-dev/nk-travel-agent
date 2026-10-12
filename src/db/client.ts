@@ -13,6 +13,8 @@ import {
   type Reminder,
   type ChangeLogEntry,
   type BackupMeta,
+  type AccommodationResult,
+  type FoodResult,
 } from "./schema";
 
 const DB_NAME = "nk-travel-agent";
@@ -37,6 +39,8 @@ export interface NkTravelAgentDB extends DBSchema {
     indexes: { "by-trip": string; "by-timestamp": string };
   };
   backupMeta: { key: string; value: BackupMeta };
+  accommodationResults: { key: string; value: AccommodationResult; indexes: { "by-trip": string } };
+  foodResults: { key: string; value: FoodResult; indexes: { "by-trip": string } };
 }
 
 export type DbStatus = "idle" | "loading" | "ready" | "error" | "read-only";
@@ -60,7 +64,9 @@ export type StoreName =
   | "researchSources"
   | "reminders"
   | "changeLog"
-  | "backupMeta";
+  | "backupMeta"
+  | "accommodationResults"
+  | "foodResults";
 
 /** Runtime array form of StoreName, for code that needs to iterate every
  * store (export/backup). Kept next to the type above — update both together. */
@@ -76,6 +82,8 @@ export const ALL_STORE_NAMES: StoreName[] = [
   "reminders",
   "changeLog",
   "backupMeta",
+  "accommodationResults",
+  "foodResults",
 ];
 
 interface DbState {

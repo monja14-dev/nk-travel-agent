@@ -47,3 +47,17 @@ export class InvalidBackupError extends Error {
     this.name = "InvalidBackupError";
   }
 }
+
+/** Phase 4: thrown when a new accommodation/food result's name matches
+ * (after normalization — see dedup.ts) one already saved for the same
+ * trip. Carries the existing record's id so the caller can point at it
+ * rather than just saying "no". */
+export class DuplicateResultError extends Error {
+  readonly existingId: string;
+
+  constructor(entityType: string, name: string, existingId: string) {
+    super(`"${name}" looks like a duplicate of a ${entityType} already saved for this trip.`);
+    this.name = "DuplicateResultError";
+    this.existingId = existingId;
+  }
+}
