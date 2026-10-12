@@ -130,3 +130,20 @@ This is the expected shape of Phase 1 — written code had real compile
 errors across two rounds, including one case where my own fix was wrong
 on the first try. Each fix traces to an exact compiler error in the
 owner's pasted output, not a guess.
+
+- `npm run dev`: **passed** — owner confirmed the browser showed "Local
+  database ready." (screenshot).
+- Git/GitHub: `git init`, root commit, then amended once to remove 6
+  accidentally-tracked build artifacts (`tsconfig.tsbuildinfo`,
+  `tsconfig.node.tsbuildinfo`, `vite.config.js`/`.d.ts`,
+  `vitest.config.js`/`.d.ts` — root cause: `tsconfig.node.json` initially
+  lacked any output redirection, and a referenced/composite TS project
+  cannot set `noEmit` at all (TS6310) — fixed by giving it its own
+  `outDir` under `node_modules/`, which is already gitignored). Final
+  local `git status`: clean. Pushed to
+  `https://github.com/monja14-dev/nk-travel-agent`, branch `main`,
+  31 objects — confirmed via the owner's pasted push output, not assumed.
+
+**Phase 1 is closed.** Next phase (likely Vercel deploy wiring, or the
+Trips module) requires explicit approval per the master prompt before
+starting.

@@ -62,6 +62,22 @@ export type StoreName =
   | "changeLog"
   | "backupMeta";
 
+/** Runtime array form of StoreName, for code that needs to iterate every
+ * store (export/backup). Kept next to the type above — update both together. */
+export const ALL_STORE_NAMES: StoreName[] = [
+  "trips",
+  "travelerProfiles",
+  "tripOverrides",
+  "itineraryDays",
+  "itineraryItems",
+  "expenses",
+  "bookings",
+  "researchSources",
+  "reminders",
+  "changeLog",
+  "backupMeta",
+];
+
 interface DbState {
   status: DbStatus;
   error: string | null;
@@ -126,16 +142,22 @@ export function getDbStatus(): { status: DbStatus; error: string | null } {
   return { status: state.status, error: state.error };
 }
 
-/** Throws rather than allowing a write while the db isn't confirmed ready. */
-function assertWritable(db: IDBPDatabase<NkTravelAgentDB> | null): IDBPDatabase<NkTravelAgentDB> {
-  if (state.status !== "ready" || !db) {
+/**
+ * The single gate every read AND write goes through. Reads aren't exempt:
+ * there's no db handle to read from before `initDb()` resolves, and after
+ * a `terminated` event `state.db` is null again, so this is the one place
+ * that check lives rather than repeated (and potentially forgotten) in
+ * every repository function.
+ */
+export function getReadyDb(): IDBPDatabase<NkTravelAgentDB> {
+  if (state.status !== "ready" || !state.db) {
     throw new Error(
-      `Refusing to write: database status is "${state.status}", not "ready". ` +
+      `Refusing to access the database: status is "${state.status}", not "ready". ` +
         `(This is the write-gating guard from the data-integrity rules — it is ` +
-        `not a bug.)`,
+        `not a bug. Call/await initDb() first.)`,
     );
   }
-  return db;
+  return state.db;
 }
 
 // NOTE: deliberately NOT generic over the exact tuple of store names.
@@ -151,7 +173,7 @@ export async function withWriteTransaction<T>(
   storeNames: StoreName[],
   fn: (tx: IDBPTransaction<NkTravelAgentDB, StoreName[], "readwrite">) => Promise<T>,
 ): Promise<T> {
-  const db = assertWritable(state.db);
+  const db = getReadyDb();
   const tx = db.transaction(storeNames, "readwrite");
   const result = await fn(tx);
   await tx.done;
