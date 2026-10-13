@@ -21,6 +21,7 @@
  */
 
 import { handleAiChatRequest } from "./_lib/gateway";
+import { streamGatewayResult } from "./_lib/streaming";
 
 export const config = { runtime: "edge" };
 
@@ -36,14 +37,29 @@ export default async function handler(request: Request): Promise<Response> {
     return jsonResponse(400, { error: "Request body must be valid JSON." });
   }
 
-  const result = await handleAiChatRequest(
-    rawBody,
-    { apiKey: process.env.ANTHROPIC_API_KEY, model: process.env.ANTHROPIC_MODEL },
-    { fetchImpl: fetch },
-    request.signal,
-  );
+  const run = () =>
+    handleAiChatRequest(
+      rawBody,
+      { apiKey: process.env.ANTHROPIC_API_KEY, model: process.env.ANTHROPIC_MODEL },
+      { fetchImpl: fetch },
+      request.signal,
+    );
 
+  // A web-search turn can outlast the Edge runtime's 25-second limit to
+  // *start* responding, so those (and only those) are streamed with a
+  // keep-alive — see api/_lib/streaming.ts. Everything else is unchanged.
+  if (wantsWebSearch(rawBody)) {
+    return streamGatewayResult(run);
+  }
+
+  const result = await run();
   return jsonResponse(result.status, result.body);
+}
+
+/** Only peeks at the flag to pick the response style. The gateway still
+ * does the real validation of the whole body. */
+function wantsWebSearch(rawBody: unknown): boolean {
+  return typeof rawBody === "object" && rawBody !== null && (rawBody as Record<string, unknown>).webSearch === true;
 }
 
 function jsonResponse(status: number, body: unknown): Response {

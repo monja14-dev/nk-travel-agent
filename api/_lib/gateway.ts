@@ -15,12 +15,26 @@ import {
   MAX_REQUEST_BODY_BYTES,
 } from "./schemas";
 import {
-  callAnthropic,
+  callAnthropicDetailed,
+  type AnthropicCallResult,
   ProviderError,
   ProviderTimeoutError,
   RequestCancelledError,
 } from "./anthropicClient";
 import { buildSystemPrompt } from "./systemPrompt";
+
+/** Hard cap on web searches per chat message. This is the cost ceiling
+ * (each search is billed per use) and it is fixed here on the server: the
+ * browser can only switch search on or off, never raise this number. */
+export const WEB_SEARCH_MAX_USES = 5;
+
+/** A search turn is much slower than a plain one. The Vercel Edge function
+ * must *start* responding within 25s but may stream for up to 300s, and
+ * api/ai-chat.ts keeps the response alive while this runs. */
+export const WEB_SEARCH_TIMEOUT_MS = 120_000;
+
+/** Enough pages to check the answer against, not a wall of links. */
+const MAX_SOURCES_RETURNED = 20;
 
 export interface GatewayEnv {
   /** undefined when the server isn't configured — the gateway reports
@@ -42,6 +56,10 @@ export interface GatewayResult {
 
 const GENERIC_PROVIDER_ERROR_MESSAGE =
   "The AI didn't respond successfully. Try again in a moment — nothing was changed.";
+
+const WEB_SEARCH_UNAVAILABLE_MESSAGE =
+  "Web search isn't available for this AI setup (it may be switched off for the Anthropic account, or the " +
+  "configured model doesn't support it). Turn off \"Search the web\" to keep chatting — nothing was changed.";
 
 export async function handleAiChatRequest(
   rawBody: unknown,
@@ -87,8 +105,13 @@ export async function handleAiChatRequest(
         )}`
       : "This trip's itinerary has no days yet (nothing to target with an itinerary-item-upsert proposal).";
 
+  // Only when searching: the model needs today's date to judge how old a
+  // price or review it finds is. Plain turns are byte-for-byte unchanged.
+  const dateLine = request.webSearch ? `Today's date: ${new Date().toISOString().slice(0, 10)}\n` : "";
+
   const contextPreamble =
     `Context for this turn (JSON):\n` +
+    dateLine +
     `Trip: ${JSON.stringify(request.context.trip)}\n` +
     `Couple profile: ${JSON.stringify(request.context.profile)}\n` +
     `${overrideContextText}\n` +
@@ -99,16 +122,17 @@ export async function handleAiChatRequest(
     { role: "user" as const, content: `${contextPreamble}\n\nMessage: ${request.message}` },
   ];
 
-  let rawText: string;
+  let call: AnthropicCallResult;
   try {
-    rawText = await callAnthropic({
+    call = await callAnthropicDetailed({
       apiKey: env.apiKey,
       model: env.model,
-      systemPrompt: buildSystemPrompt(),
+      systemPrompt: buildSystemPrompt({ webSearch: request.webSearch }),
       messages,
       signal,
-      timeoutMs: deps.timeoutMs,
+      timeoutMs: deps.timeoutMs ?? (request.webSearch ? WEB_SEARCH_TIMEOUT_MS : undefined),
       fetchImpl: deps.fetchImpl,
+      webSearch: request.webSearch ? { maxUses: WEB_SEARCH_MAX_USES } : undefined,
     });
   } catch (err) {
     if (err instanceof ProviderTimeoutError) {
@@ -127,13 +151,36 @@ export async function handleAiChatRequest(
       // implementation details or, in principle, echo back parts of
       // the request.
       console.error("[ai-gateway] provider error:", err.message);
+      // A 400 that names web search means the tool itself was rejected
+      // (switched off for the org, or unsupported by the model). Say so
+      // plainly rather than a vague retry message — retrying won't help.
+      if (request.webSearch && err.status === 400 && /web.?search/i.test(err.message)) {
+        return { status: 502, body: { error: WEB_SEARCH_UNAVAILABLE_MESSAGE } };
+      }
       return { status: 502, body: { error: GENERIC_PROVIDER_ERROR_MESSAGE } };
     }
     throw err;
   }
 
   try {
-    return { status: 200, body: parseProviderOutput(rawText) };
+    const parsed = parseProviderOutput(call.text);
+    if (!request.webSearch) return { status: 200, body: parsed };
+
+    const warnings = [...parsed.warnings];
+    if (call.searchErrors.length > 0) {
+      warnings.push(
+        `Some web searches didn't go through (${[...new Set(call.searchErrors)].join(", ")}), so this answer may be less complete.`,
+      );
+    }
+    return {
+      status: 200,
+      body: {
+        ...parsed,
+        warnings,
+        sources: call.sources.slice(0, MAX_SOURCES_RETURNED),
+        searchCount: call.searchCount,
+      },
+    };
   } catch (err) {
     if (err instanceof MalformedProviderOutputError) {
       console.error("[ai-gateway] malformed provider output:", err.message);

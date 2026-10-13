@@ -228,3 +228,26 @@ describe("parseProviderOutput — malformed output", () => {
     expect(result.proposals[0].changes).toEqual({ name: "New name" });
   });
 });
+
+describe("webSearch flag and narration tolerance (Phase 8)", () => {
+  it("defaults webSearch to false when omitted", () => {
+    expect(validateAiChatRequestBody(validBody()).webSearch).toBe(false);
+  });
+
+  it("passes webSearch: true through", () => {
+    expect(validateAiChatRequestBody(validBody({ webSearch: true })).webSearch).toBe(true);
+  });
+
+  it("rejects a non-boolean webSearch", () => {
+    expect(() => validateAiChatRequestBody(validBody({ webSearch: "yes" }))).toThrow(RequestValidationError);
+  });
+
+  it("parses the JSON object even when a sentence of narration precedes it", () => {
+    const parsed = parseProviderOutput('Here you go. {"reply":"Found two hotels.","proposals":[]}');
+    expect(parsed.reply).toBe("Found two hotels.");
+  });
+
+  it("still rejects text with no JSON object in it at all", () => {
+    expect(() => parseProviderOutput("Sure! I'd book the hotel near Shinjuku.")).toThrow();
+  });
+});

@@ -12,7 +12,8 @@ import {
 } from "./buildContext";
 import { previewProposal, type ProposalPreview } from "./previewProposal";
 import { applyProposal } from "./applyProposal";
-import type { AiProposal, AiChatResponseBody, AiChatErrorBody, ChatTurn } from "./types";
+import type { AiProposal, AiChatResponseBody, AiChatErrorBody, ChatTurn, SearchSourceInfo } from "./types";
+import { safeHttpUrl } from "../../lib/url";
 import type { Trip } from "../../db/schema";
 import type { View } from "../../navigation/types";
 
@@ -25,6 +26,9 @@ interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   proposals?: ProposalEntry[];
+  /** Pages the web search returned for this reply (search turns only). */
+  sources?: SearchSourceInfo[];
+  searchCount?: number;
 }
 
 type ProposalStatus = "checking" | "ready" | "stale" | "not-found" | "applying" | "applied" | "rejected" | "error";
@@ -51,6 +55,9 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
+  // On by default: finding hotels and food is what the Concierge is for.
+  // The cap per message is fixed on the server; this only switches it on/off.
+  const [searchWeb, setSearchWeb] = useState(true);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -154,6 +161,7 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
             itinerary: buildItineraryContextSnapshot(days, items),
           },
           history,
+          webSearch: searchWeb,
         }),
       });
 
@@ -165,8 +173,16 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
         return;
       }
 
-      const body = (await response.json()) as AiChatResponseBody;
+      const parsed = (await response.json()) as AiChatResponseBody | AiChatErrorBody;
       if (requestId !== requestIdRef.current) return;
+
+      // The web-search path streams, so its HTTP status is always 200 and a
+      // failure arrives inside the body instead (see api/_lib/streaming.ts).
+      if ("error" in parsed) {
+        setSendError(parsed.error);
+        return;
+      }
+      const body = parsed;
 
       const entries: ProposalEntry[] = body.proposals.map((proposal) => ({
         localId: `proposal_${nextLocalId++}`,
@@ -176,7 +192,10 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
       const previewed = await refreshProposalPreviews(entries);
       if (requestId !== requestIdRef.current) return;
 
-      setMessages((prev) => [...prev, { role: "assistant", content: body.reply, proposals: previewed }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: body.reply, proposals: previewed, sources: body.sources, searchCount: body.searchCount },
+      ]);
       setWarnings(body.warnings);
     } catch (err) {
       if (requestId !== requestIdRef.current) return; // cancelled — don't surface an error for a turn we abandoned
@@ -271,9 +290,9 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
 
       <h1 className="text-xl font-semibold text-ink mb-1">NK Concierge</h1>
       <p className="text-sm text-ink-muted mb-6">
-        About <span className="font-medium">{trip.name}</span>. The AI can suggest changes to this trip or its
-        preferences — it never saves anything on its own. Every suggestion shows up below for you to review and
-        approve or reject.
+        About <span className="font-medium">{trip.name}</span>. The AI can search the web for hotels, food and more,
+        and suggest changes to this trip or its preferences — it never saves anything on its own. Every
+        suggestion shows up below for you to review and approve or reject.
       </p>
 
       <div className="space-y-4 mb-6">
@@ -289,6 +308,9 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
             >
               {m.content}
             </div>
+            {m.role === "assistant" && m.sources && m.sources.length > 0 ? (
+              <SourcesList sources={m.sources} searchCount={m.searchCount} />
+            ) : null}
             {m.proposals && m.proposals.length > 0 ? (
               <div className="mt-2 space-y-2">
                 {m.proposals.map((entry) => (
@@ -314,6 +336,27 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
       ) : null}
 
       {sendError ? <p className="text-danger-text text-sm mb-4">{sendError}</p> : null}
+
+      {sending && searchWeb ? (
+        <p className="text-xs text-ink-muted mb-2" role="status">
+          Searching the web… this can take up to a minute or two.
+        </p>
+      ) : null}
+
+      <label className="mb-2 flex items-start gap-2 text-xs text-ink-muted">
+        <input
+          type="checkbox"
+          className="mt-0.5"
+          checked={searchWeb}
+          onChange={(e) => setSearchWeb(e.target.checked)}
+          disabled={sending}
+        />
+        <span>
+          <span className="font-medium text-ink">Search the web</span> — lets the AI look up hotels, food and prices
+          (up to 5 searches per message, each one billed to your Anthropic account). Prices from search are
+          estimates, not live availability. Turn off for a cheaper, faster chat.
+        </span>
+      </label>
 
       <form onSubmit={handleSend} className="flex items-end gap-2">
         <textarea
@@ -343,6 +386,32 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
         )}
       </form>
     </div>
+  );
+}
+
+function SourcesList({ sources, searchCount }: { sources: SearchSourceInfo[]; searchCount?: number }) {
+  // Re-checked here even though the server only sends http(s) pages: a
+  // link is only ever rendered for a URL that passes safeHttpUrl.
+  const links = sources
+    .map((s) => ({ title: s.title, href: safeHttpUrl(s.url) }))
+    .filter((s): s is { title: string; href: string } => s.href !== null);
+  if (links.length === 0) return null;
+
+  return (
+    <details className="mt-2 rounded-lg border border-navy-border bg-navy-surface px-3 py-2 text-xs text-ink-muted">
+      <summary className="cursor-pointer text-ink">
+        Sources ({links.length} pages{searchCount !== undefined ? `, ${searchCount} search${searchCount === 1 ? "" : "es"}` : ""})
+      </summary>
+      <ul className="mt-2 space-y-1">
+        {links.map((l) => (
+          <li key={l.href}>
+            <a href={l.href} target="_blank" rel="noopener noreferrer" className="text-accent underline break-words">
+              {l.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 

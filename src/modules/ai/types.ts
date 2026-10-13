@@ -99,13 +99,26 @@ export interface ItineraryItemProposal {
 
 export type AiProposal = TripUpdateProposal | TripOverrideProposal | ItineraryItemProposal;
 
+/** A page the web search returned (Phase 8). Only http(s) URLs. */
+export interface SearchSourceInfo {
+  title: string;
+  url: string;
+}
+
 export interface AiChatResponseBody {
   reply: string;
   proposals: AiProposal[];
   warnings: string[];
+  /** Present only on turns where web search was switched on. */
+  sources?: SearchSourceInfo[];
+  /** Searches actually run (billed) this turn; only on search turns. */
+  searchCount?: number;
 }
 
 export interface AiChatErrorBody {
   error: string;
   fieldErrors?: Record<string, string>;
+  /** Only on the streamed (web-search) path, where the HTTP status is
+   * already sent as 200 before the outcome is known. */
+  status?: number;
 }

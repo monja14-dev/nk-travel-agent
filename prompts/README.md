@@ -29,6 +29,8 @@ safeguards section. Nothing here is newly invented behavior.
   seeded in `src/db/repositories/travelerProfilesRepo.ts` — editable by
   the couple from the app's Profile screen. This file is the historical
   source it was seeded from, not a second source of truth.
+- `web-search.md` — the Phase 8 addendum described below; appended to the
+  runtime prompt only when web search is on for that message.
 - `modes/*.md` — one file per mode the chat-based agent already had
   (Stay Hunter, Food Hunter, Itinerary Planner, Budget Planner,
   Transportation Planner, Decision Support). `api/_lib/systemPrompt.ts`
@@ -44,6 +46,14 @@ rather than a runtime file read).
 What's **not** wired in, and explicitly out of scope for Phase 3 per the
 owner's instruction ("do not build every research integration"):
 
+- **Update (Phase 8, owner-approved):** the Concierge can now search the
+  web through Anthropic's server-side `web_search` tool, when the person
+  leaves "Search the web" switched on. `web-search.md` is an addendum that
+  is appended to the system prompt **only on those turns**; it overrides
+  the "no live access" wording below for that turn. It does not make
+  Agoda/Booking.com/Airbnb searchable (see the next point) and search
+  results are never labelled `verified`. When search is off, the prompt is
+  exactly what it was before. See `docs/PHASE_8_WEB_SEARCH.md`.
 - Any live external research/booking API (Agoda, Booking.com, Airbnb,
   Klook, government fee sites, etc.). `EXISTING_AGENT_CAPABILITIES.md`
   already confirmed, from direct testing during the Boracay trip, that

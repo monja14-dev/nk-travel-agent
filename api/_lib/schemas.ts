@@ -101,6 +101,11 @@ export interface AiChatRequestBody {
     itinerary: ItineraryDayContextSnapshot[];
   };
   history: ChatTurn[];
+  /** Phase 8: the person asked for this turn to be allowed to search the
+   * web. Defaults to false when omitted, so older callers are unchanged.
+   * It only ever switches the tool on; the per-request search cap is
+   * fixed server-side and cannot be raised by the client. */
+  webSearch: boolean;
 }
 
 // Limits — the "appropriate limits" the master prompt asks for. Kept as
@@ -292,6 +297,10 @@ export function validateAiChatRequestBody(data: unknown): AiChatRequestBody {
 
   const history = validateHistory(body.history, errors);
 
+  if (body.webSearch !== undefined && typeof body.webSearch !== "boolean") {
+    errors.webSearch = "webSearch must be a boolean when provided.";
+  }
+
   if (Object.keys(errors).length > 0) {
     throw new RequestValidationError(errors);
   }
@@ -307,6 +316,7 @@ export function validateAiChatRequestBody(data: unknown): AiChatRequestBody {
       itinerary,
     },
     history,
+    webSearch: body.webSearch === true,
   };
 }
 
@@ -427,10 +437,21 @@ export interface ItineraryItemProposal {
 
 export type AiProposal = TripUpdateProposal | TripOverrideProposal | ItineraryItemProposal;
 
+/** A page the web search returned. Only http(s) URLs ever get here. */
+export interface SearchSourceInfo {
+  title: string;
+  url: string;
+}
+
 export interface AiChatResponseBody {
   reply: string;
   proposals: AiProposal[];
   warnings: string[];
+  /** Phase 8: present only on turns where web search was enabled. */
+  sources?: SearchSourceInfo[];
+  /** Phase 8: searches actually run this turn (what the provider billed
+   * for). Present only on turns where web search was enabled. */
+  searchCount?: number;
 }
 
 /** One field's worth of permissive-but-safe type checking for a
@@ -692,5 +713,15 @@ export function parseProviderOutput(raw: string): AiChatResponseBody {
 function extractJsonText(raw: string): string {
   const trimmed = raw.trim();
   const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  return fenced ? fenced[1] : trimmed;
+  if (fenced) return fenced[1];
+  // After a web search the model sometimes puts a sentence of narration in
+  // the same text block as its JSON. If the text isn't already an object,
+  // take the outermost {...}. This only changes which text is *parsed*; the
+  // result still goes through the same strict shape and proposal checks.
+  if (!trimmed.startsWith("{")) {
+    const first = trimmed.indexOf("{");
+    const last = trimmed.lastIndexOf("}");
+    if (first !== -1 && last > first) return trimmed.slice(first, last + 1);
+  }
+  return trimmed;
 }
