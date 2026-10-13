@@ -80,12 +80,12 @@ export default function BudgetTracker({ tripId, onNavigate }: { tripId: string; 
     await reload();
   }
 
-  if (loadState === "loading") return <div className="max-w-2xl w-full mx-auto px-6 py-8 text-slate-500 text-sm">Loading budget…</div>;
+  if (loadState === "loading") return <div className="max-w-2xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8 text-ink-muted text-sm">Loading budget…</div>;
   if (loadState === "not-found" || !trip) {
     return (
-      <div className="max-w-2xl w-full mx-auto px-6 py-8">
-        <p className="text-slate-700 mb-3">That trip no longer exists.</p>
-        <button type="button" onClick={() => onNavigate({ name: "dashboard" })} className="text-sm font-medium text-slate-900 underline">
+      <div className="max-w-2xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-ink mb-3">That trip no longer exists.</p>
+        <button type="button" onClick={() => onNavigate({ name: "dashboard" })} className="text-sm font-medium text-accent underline">
           Back to dashboard
         </button>
       </div>
@@ -93,8 +93,8 @@ export default function BudgetTracker({ tripId, onNavigate }: { tripId: string; 
   }
   if (loadState === "error") {
     return (
-      <div className="max-w-2xl w-full mx-auto px-6 py-8">
-        <p className="text-red-700 text-sm">Couldn't load this budget: {loadError}</p>
+      <div className="max-w-2xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-danger-text text-sm">Couldn't load this budget: {loadError}</p>
       </div>
     );
   }
@@ -102,22 +102,22 @@ export default function BudgetTracker({ tripId, onNavigate }: { tripId: string; 
   const totals = computeBudgetTotals(expenses, trip.travelerCount);
 
   return (
-    <div className="max-w-2xl w-full mx-auto px-6 py-8">
-      <button type="button" onClick={() => onNavigate({ name: "trip-details", tripId })} className="text-sm text-slate-500 underline mb-4">
+    <div className="max-w-2xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+      <button type="button" onClick={() => onNavigate({ name: "trip-details", tripId })} className="text-sm text-ink-muted underline mb-4">
         ← Back to {trip.name}
       </button>
-      <h1 className="text-xl font-semibold text-slate-900 mb-1">Budget</h1>
-      <p className="text-sm text-slate-500 mb-6">
+      <h1 className="text-xl font-semibold text-ink mb-1">Budget</h1>
+      <p className="text-sm text-ink-muted mb-6">
         Planned vs. actual, by currency. "Actual" only counts expenses that have a logged actual amount — it never
         assumes an unlogged expense matched what was planned.
       </p>
 
       {totals.length > 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-4 mb-6 space-y-3">
+        <div className="rounded-lg border border-navy-border bg-navy-surface p-4 mb-6 space-y-3">
           {totals.map((t) => (
             <div key={t.currency} className="text-sm">
-              <p className="font-medium text-slate-900">{t.currency}</p>
-              <p className="text-slate-600">
+              <p className="font-medium text-ink">{t.currency}</p>
+              <p className="text-ink-muted">
                 Planned: {t.totalPlanned.toFixed(2)} ({t.perPersonPlanned.toFixed(2)}/person) · Actual logged:{" "}
                 {t.totalActualKnown.toFixed(2)} ({t.perPersonActualKnown.toFixed(2)}/person)
                 {t.missingActualCount > 0 ? ` · ${t.missingActualCount} expense(s) with no actual logged yet` : ""}
@@ -126,33 +126,33 @@ export default function BudgetTracker({ tripId, onNavigate }: { tripId: string; 
           ))}
         </div>
       ) : (
-        <p className="text-sm text-slate-400 italic mb-6">No expenses logged yet.</p>
+        <p className="text-sm text-ink-faint italic mb-6">No expenses logged yet.</p>
       )}
 
-      <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white mb-6">
+      <div className="divide-y divide-navy-border rounded-lg border border-navy-border bg-navy-surface mb-6">
         {expenses.map((e) => (
           <div key={e.id} className="flex items-center justify-between px-4 py-2 text-sm gap-2 flex-wrap">
             <div className="min-w-0 flex-1">
-              <span className="font-medium text-slate-900">{e.label}</span>{" "}
-              <span className="text-xs text-slate-400">({e.kind}, {e.category})</span>
-              <p className="text-xs text-slate-500 truncate">
+              <span className="font-medium text-ink">{e.label}</span>{" "}
+              <span className="text-xs text-ink-faint">({e.kind}, {e.category})</span>
+              <p className="text-xs text-ink-muted truncate">
                 Planned {e.plannedAmount} {e.currency}
                 {e.actualAmount !== undefined ? ` · Actual ${e.actualAmount} ${e.currency}` : " · Actual not logged"}
               </p>
             </div>
-            <button type="button" onClick={() => handleDelete(e.id)} className="text-xs font-medium text-red-700 underline shrink-0">
+            <button type="button" onClick={() => handleDelete(e.id)} className="text-xs font-medium text-danger-text underline shrink-0">
               Delete
             </button>
           </div>
         ))}
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900 mb-3">Add an expense</h2>
-        <div className="grid grid-cols-2 gap-2 mb-2">
+      <div className="rounded-lg border border-navy-border bg-navy-surface p-4">
+        <h2 className="text-sm font-semibold text-ink mb-3">Add an expense</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
           <label className="block">
-            <span className="block text-xs text-slate-500 mb-0.5">Kind</span>
-            <select value={kind} onChange={(e) => setKind(e.target.value as ExpenseKind)} className="w-full border rounded px-2 py-1 text-sm">
+            <span className="block text-xs text-ink-muted mb-0.5">Kind</span>
+            <select value={kind} onChange={(e) => setKind(e.target.value as ExpenseKind)} className="w-full rounded-lg border border-navy-border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-2.5 py-1.5 text-sm">
               {EXPENSE_KINDS.map((k) => (
                 <option key={k} value={k}>
                   {k}
@@ -161,41 +161,41 @@ export default function BudgetTracker({ tripId, onNavigate }: { tripId: string; 
             </select>
           </label>
           <label className="block">
-            <span className="block text-xs text-slate-500 mb-0.5">Category</span>
-            <input value={category} onChange={(e) => setCategory(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" />
-            {fieldErrors.category ? <span className="text-xs text-red-700">{fieldErrors.category}</span> : null}
+            <span className="block text-xs text-ink-muted mb-0.5">Category</span>
+            <input value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-lg border border-navy-border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-2.5 py-1.5 text-sm" />
+            {fieldErrors.category ? <span className="text-xs text-danger-text">{fieldErrors.category}</span> : null}
           </label>
           <label className="block">
-            <span className="block text-xs text-slate-500 mb-0.5">Label</span>
-            <input value={label} onChange={(e) => setLabel(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" />
-            {fieldErrors.label ? <span className="text-xs text-red-700">{fieldErrors.label}</span> : null}
+            <span className="block text-xs text-ink-muted mb-0.5">Label</span>
+            <input value={label} onChange={(e) => setLabel(e.target.value)} className="w-full rounded-lg border border-navy-border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-2.5 py-1.5 text-sm" />
+            {fieldErrors.label ? <span className="text-xs text-danger-text">{fieldErrors.label}</span> : null}
           </label>
           <label className="block">
-            <span className="block text-xs text-slate-500 mb-0.5">Currency</span>
-            <input value={currency} onChange={(e) => setCurrency(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" />
-            {fieldErrors.currency ? <span className="text-xs text-red-700">{fieldErrors.currency}</span> : null}
+            <span className="block text-xs text-ink-muted mb-0.5">Currency</span>
+            <input value={currency} onChange={(e) => setCurrency(e.target.value)} className="w-full rounded-lg border border-navy-border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-2.5 py-1.5 text-sm" />
+            {fieldErrors.currency ? <span className="text-xs text-danger-text">{fieldErrors.currency}</span> : null}
           </label>
           <label className="block">
-            <span className="block text-xs text-slate-500 mb-0.5">Planned amount</span>
-            <input value={plannedAmount} onChange={(e) => setPlannedAmount(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" />
-            {fieldErrors.plannedAmount ? <span className="text-xs text-red-700">{fieldErrors.plannedAmount}</span> : null}
+            <span className="block text-xs text-ink-muted mb-0.5">Planned amount</span>
+            <input value={plannedAmount} onChange={(e) => setPlannedAmount(e.target.value)} className="w-full rounded-lg border border-navy-border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-2.5 py-1.5 text-sm" />
+            {fieldErrors.plannedAmount ? <span className="text-xs text-danger-text">{fieldErrors.plannedAmount}</span> : null}
           </label>
           <label className="block">
-            <span className="block text-xs text-slate-500 mb-0.5">Actual amount (optional)</span>
-            <input value={actualAmount} onChange={(e) => setActualAmount(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" />
-            {fieldErrors.actualAmount ? <span className="text-xs text-red-700">{fieldErrors.actualAmount}</span> : null}
+            <span className="block text-xs text-ink-muted mb-0.5">Actual amount (optional)</span>
+            <input value={actualAmount} onChange={(e) => setActualAmount(e.target.value)} className="w-full rounded-lg border border-navy-border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-2.5 py-1.5 text-sm" />
+            {fieldErrors.actualAmount ? <span className="text-xs text-danger-text">{fieldErrors.actualAmount}</span> : null}
           </label>
-          <label className="block col-span-2">
-            <span className="block text-xs text-slate-500 mb-0.5">Notes</span>
-            <input value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" />
+          <label className="block sm:col-span-2">
+            <span className="block text-xs text-ink-muted mb-0.5">Notes</span>
+            <input value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full rounded-lg border border-navy-border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-2.5 py-1.5 text-sm" />
           </label>
         </div>
-        {fieldErrors._general ? <p className="text-xs text-red-700 mb-2">{fieldErrors._general}</p> : null}
+        {fieldErrors._general ? <p className="text-xs text-danger-text mb-2">{fieldErrors._general}</p> : null}
         <button
           type="button"
           onClick={handleAdd}
           disabled={saving || !category.trim() || !label.trim() || !plannedAmount || !currency.trim()}
-          className="px-3 py-1.5 rounded-md bg-slate-900 text-white text-xs font-medium hover:bg-slate-700 disabled:opacity-50"
+          className="px-3 py-1.5 rounded-md bg-accent text-navy-bg text-xs font-medium hover:bg-accent-hover disabled:opacity-50"
         >
           {saving ? "Saving…" : "Add expense"}
         </button>

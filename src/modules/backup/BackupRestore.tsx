@@ -98,40 +98,40 @@ export default function BackupRestore({ onNavigate }: BackupRestoreProps) {
   }
 
   return (
-    <div className="max-w-2xl w-full mx-auto px-6 py-8">
+    <div className="max-w-2xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
       <button
         type="button"
         onClick={() => onNavigate({ name: "dashboard" })}
-        className="text-sm text-slate-500 underline mb-4"
+        className="text-sm text-ink-muted underline mb-4"
       >
         ← Back to your trips
       </button>
-      <h1 className="text-xl font-semibold text-slate-900 mb-1">Backup &amp; Restore</h1>
-      <p className="text-sm text-slate-500 mb-6">
+      <h1 className="text-xl font-semibold text-ink mb-1">Backup &amp; Restore</h1>
+      <p className="text-sm text-ink-muted mb-6">
         Everything in this app — every trip, itinerary, budget line, booking, and reminder — lives only in this
         browser's local storage. A backup is the only way to move it to another browser or device, or recover it
         if this browser's data is ever cleared.
       </p>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-5 mb-6">
-        <h2 className="text-sm font-semibold text-slate-900 mb-2">Download a backup</h2>
-        <p className="text-xs text-slate-500 mb-3">
+      <div className="rounded-lg border border-navy-border bg-navy-surface p-5 mb-6">
+        <h2 className="text-sm font-semibold text-ink mb-2">Download a backup</h2>
+        <p className="text-xs text-ink-muted mb-3">
           Saves everything in this app right now to a single .json file on your device.
         </p>
         <button
           type="button"
           onClick={handleExport}
           disabled={exportState === "working"}
-          className="px-3 py-1.5 rounded-md bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 disabled:opacity-50"
+          className="px-3 py-1.5 rounded-md bg-accent text-navy-bg text-sm font-medium hover:bg-accent-hover disabled:opacity-50"
         >
           {exportState === "working" ? "Preparing…" : "Download backup"}
         </button>
-        {exportState === "error" ? <p className="text-red-700 text-sm mt-2">Couldn't export: {exportError}</p> : null}
+        {exportState === "error" ? <p className="text-danger-text text-sm mt-2">Couldn't export: {exportError}</p> : null}
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-5">
-        <h2 className="text-sm font-semibold text-slate-900 mb-2">Restore from a backup file</h2>
-        <p className="text-xs text-slate-500 mb-3">
+      <div className="rounded-lg border border-navy-border bg-navy-surface p-5">
+        <h2 className="text-sm font-semibold text-ink mb-2">Restore from a backup file</h2>
+        <p className="text-xs text-ink-muted mb-3">
           <strong>This replaces everything currently in this app</strong> with what's in the chosen file. An
           invalid file is rejected and changes nothing. A fresh backup of what's about to be replaced is offered
           for download below first, so a restore is itself recoverable if it turns out to be the wrong file.
@@ -145,24 +145,24 @@ export default function BackupRestore({ onNavigate }: BackupRestoreProps) {
             e.target.value = ""; // allow picking the same file again after an error
             if (file) void handleRestoreFile(file);
           }}
-          className="text-sm"
+          className="text-sm text-ink-muted file:mr-3 file:rounded-lg file:border file:border-navy-border file:bg-navy-elevated file:px-3 file:py-1.5 file:text-sm file:text-ink"
         />
-        {restoreState === "working" ? <p className="text-slate-500 text-sm mt-2">Restoring…</p> : null}
+        {restoreState === "working" ? <p className="text-ink-muted text-sm mt-2">Restoring…</p> : null}
         {restoreState === "error" ? (
-          <p className="text-red-700 text-sm mt-2">
+          <p className="text-danger-text text-sm mt-2">
             Couldn't restore — nothing was changed: {restoreError}
           </p>
         ) : null}
         {restoreState === "done" ? (
           <div className="text-sm mt-2">
-            <p className="text-emerald-700">
+            <p className="text-success-text">
               Restored successfully — {restoredCount} record{restoredCount === 1 ? "" : "s"} across every store.
             </p>
             {safetyBackup ? (
               <button
                 type="button"
                 onClick={() => downloadJson(backupFilename("nk-travel-agent-pre-restore-safety-backup"), safetyBackup)}
-                className="text-xs font-medium text-slate-900 underline mt-1"
+                className="text-xs font-medium text-accent underline mt-1"
               >
                 Download what was here just before this restore
               </button>

@@ -172,16 +172,16 @@ export default function TripOverrideForm({ tripId, onNavigate }: TripOverrideFor
   }
 
   if (loadState === "loading") {
-    return <div className="max-w-xl w-full mx-auto px-6 py-8 text-slate-500 text-sm">Loading…</div>;
+    return <div className="max-w-xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8 text-ink-muted text-sm">Loading…</div>;
   }
   if (loadState === "not-found") {
     return (
-      <div className="max-w-xl w-full mx-auto px-6 py-8">
-        <p className="text-slate-700 mb-3">That trip no longer exists.</p>
+      <div className="max-w-xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-ink mb-3">That trip no longer exists.</p>
         <button
           type="button"
           onClick={() => onNavigate({ name: "dashboard" })}
-          className="text-sm font-medium text-slate-900 underline"
+          className="text-sm font-medium text-accent underline"
         >
           Back to dashboard
         </button>
@@ -190,22 +190,22 @@ export default function TripOverrideForm({ tripId, onNavigate }: TripOverrideFor
   }
   if (loadState === "error") {
     return (
-      <div className="max-w-xl w-full mx-auto px-6 py-8">
-        <p className="text-red-700 text-sm">Couldn't load trip preferences: {loadError}</p>
+      <div className="max-w-xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-danger-text text-sm">Couldn't load trip preferences: {loadError}</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-xl w-full mx-auto px-6 py-8">
-      <h1 className="text-xl font-semibold text-slate-900 mb-1">Trip Preferences</h1>
-      <p className="text-sm text-slate-500 mb-6">
+    <div className="max-w-xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+      <h1 className="text-xl font-semibold text-ink mb-1">Trip Preferences</h1>
+      <p className="text-sm text-ink-muted mb-6">
         For <span className="font-medium">{tripName}</span>. These override the couple profile for this
         trip only — nothing here affects any other trip.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-cols-3 gap-4">
           <Field label="Currency" error={fieldErrors.currency}>
             <input
               className={inputClass(fieldErrors.currency)}
@@ -242,12 +242,12 @@ export default function TripOverrideForm({ tripId, onNavigate }: TripOverrideFor
           />
         </Field>
 
-        <label className="flex items-center gap-2 text-sm text-slate-700">
+        <label className="flex items-center gap-2 text-sm text-ink">
           <input
             type="checkbox"
             checked={form.hotelVsAirbnbOpen}
             onChange={(e) => updateField("hotelVsAirbnbOpen", e.target.checked)}
-            className="rounded border-slate-300"
+            className="h-4 w-4 rounded border-navy-border accent-[#D5B67B]"
           />
           Open to Airbnb/condo, not just hotels, for this trip
         </label>
@@ -261,13 +261,13 @@ export default function TripOverrideForm({ tripId, onNavigate }: TripOverrideFor
           />
         </Field>
 
-        {submitError ? <p className="text-red-700 text-sm">{submitError}</p> : null}
+        {submitError ? <p className="text-danger-text text-sm">{submitError}</p> : null}
 
         <div className="flex items-center gap-3 pt-2">
           <button
             type="submit"
             disabled={submitting}
-            className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-accent text-navy-bg text-sm font-medium hover:bg-accent-hover disabled:opacity-50"
           >
             {submitting ? "Saving…" : "Save preferences"}
           </button>
@@ -276,7 +276,7 @@ export default function TripOverrideForm({ tripId, onNavigate }: TripOverrideFor
               type="button"
               onClick={handleClear}
               disabled={submitting}
-              className="px-4 py-2 rounded-md border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="px-4 py-2 rounded-md border border-navy-border text-sm font-medium text-ink hover:bg-navy-elevated disabled:opacity-50"
             >
               Clear override
             </button>
@@ -284,7 +284,7 @@ export default function TripOverrideForm({ tripId, onNavigate }: TripOverrideFor
           <button
             type="button"
             onClick={() => onNavigate({ name: "trip-details", tripId })}
-            className="text-sm text-slate-600 underline"
+            className="text-sm text-ink-muted underline"
           >
             Cancel
           </button>
@@ -295,17 +295,17 @@ export default function TripOverrideForm({ tripId, onNavigate }: TripOverrideFor
 }
 
 function inputClass(error: string | undefined): string {
-  return `w-full rounded-md border px-3 py-2 text-sm text-slate-900 ${
-    error ? "border-red-400" : "border-slate-300"
+  return `w-full rounded-lg border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-3 py-2 text-sm ${
+    error ? "border-danger/60" : "border-navy-border"
   }`;
 }
 
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-sm font-medium text-slate-700 mb-1">{label}</span>
+      <span className="block text-sm font-medium text-ink mb-1">{label}</span>
       {children}
-      {error ? <span className="block text-xs text-red-600 mt-1">{error}</span> : null}
+      {error ? <span className="block text-xs text-danger-text mt-1">{error}</span> : null}
     </label>
   );
 }

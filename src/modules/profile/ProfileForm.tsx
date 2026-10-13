@@ -103,28 +103,28 @@ export default function ProfileForm({ onNavigate }: ProfileFormProps) {
   }
 
   if (loadState === "loading") {
-    return <div className="max-w-xl w-full mx-auto px-6 py-8 text-slate-500 text-sm">Loading profile…</div>;
+    return <div className="max-w-xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8 text-ink-muted text-sm">Loading profile…</div>;
   }
   if (loadState === "error" || !profile || !form) {
     return (
-      <div className="max-w-xl w-full mx-auto px-6 py-8">
-        <p className="text-red-700 text-sm">Couldn't load the couple profile: {loadError}</p>
+      <div className="max-w-xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-danger-text text-sm">Couldn't load the couple profile: {loadError}</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-xl w-full mx-auto px-6 py-8">
+    <div className="max-w-xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
       <button
         type="button"
         onClick={() => onNavigate({ name: "dashboard" })}
-        className="text-sm text-slate-500 underline mb-4"
+        className="text-sm text-ink-muted underline mb-4"
       >
         ← Back to dashboard
       </button>
 
-      <h1 className="text-xl font-semibold text-slate-900 mb-1">Couple Travel Profile</h1>
-      <p className="text-sm text-slate-500 mb-6">
+      <h1 className="text-xl font-semibold text-ink mb-1">Couple Travel Profile</h1>
+      <p className="text-sm text-ink-muted mb-6">
         Shared defaults for every trip. A trip with its own preferences (set from its details page)
         overrides these for that trip only — editing this profile never touches a trip's override.
       </p>
@@ -179,14 +179,14 @@ export default function ProfileForm({ onNavigate }: ProfileFormProps) {
           />
         </Field>
 
-        {submitError ? <p className="text-red-700 text-sm">{submitError}</p> : null}
-        {savedAt ? <p className="text-emerald-700 text-sm">Saved.</p> : null}
+        {submitError ? <p className="text-danger-text text-sm">{submitError}</p> : null}
+        {savedAt ? <p className="text-success-text text-sm">Saved.</p> : null}
 
         <div className="pt-2">
           <button
             type="submit"
             disabled={submitting}
-            className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-accent text-navy-bg text-sm font-medium hover:bg-accent-hover disabled:opacity-50"
           >
             {submitting ? "Saving…" : "Save profile"}
           </button>
@@ -196,12 +196,12 @@ export default function ProfileForm({ onNavigate }: ProfileFormProps) {
   );
 }
 
-const inputClass = "w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900";
+const inputClass = "w-full rounded-lg border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 border-navy-border px-3 py-2 text-sm";
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-sm font-medium text-slate-700 mb-1">{label}</span>
+      <span className="block text-sm font-medium text-ink mb-1">{label}</span>
       {children}
     </label>
   );

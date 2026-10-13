@@ -1,3 +1,60 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Phase 7 (UI): base theme. One dark-navy theme app-wide — see
+   tailwind.config.js for the token values (navy/ink/accent/success/
+   warning/danger). Applied directly on <body>, not behind a `dark:`
+   variant, since this app does not offer a light theme. */
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-navy-bg text-ink font-sans antialiased;
+  }
+
+  /* Keyboard focus is always visible, on every control (buttons, links,
+     nav items). Controls with their own focus style (form inputs) still
+     override this. */
+  :focus-visible {
+    outline: 2px solid #D5B67B;
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  ::selection {
+    @apply bg-accent/30 text-ink;
+  }
+
+  /* Scrollbars: keep them unobtrusive on the dark background (Firefox +
+     WebKit). Pure cosmetic — no effect on scroll behavior. */
+  * {
+    scrollbar-color: #344155 transparent;
+    scrollbar-width: thin;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: #344155;
+    border-radius: 9999px;
+  }
+}

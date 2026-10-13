@@ -14,6 +14,7 @@ import BudgetTracker from "./modules/budget/BudgetTracker";
 import BookingsTracker from "./modules/bookings/BookingsTracker";
 import RemindersChecklist from "./modules/reminders/RemindersChecklist";
 import BackupRestore from "./modules/backup/BackupRestore";
+import { AppShell } from "./components/shell/AppShell";
 
 /**
  * Phase 2: the db-status gate from Phase 1 is unchanged — writes stay
@@ -39,7 +40,7 @@ export default function App() {
   if (status === "idle" || status === "loading") {
     return (
       <CenteredMessage>
-        <p className="text-slate-700">Initializing local database…</p>
+        <p className="text-ink-muted">Initializing local database…</p>
       </CenteredMessage>
     );
   }
@@ -47,7 +48,7 @@ export default function App() {
   if (status === "read-only") {
     return (
       <CenteredMessage>
-        <p className="text-amber-700">
+        <p className="text-warning-text">
           Read-only: this app is open in another tab that controls the current upgrade.
         </p>
       </CenteredMessage>
@@ -57,37 +58,13 @@ export default function App() {
   if (status === "error") {
     return (
       <CenteredMessage>
-        <p className="text-red-700">Database error: {error ?? "unknown error"}</p>
+        <p className="text-danger-text">Database error: {error ?? "unknown error"}</p>
       </CenteredMessage>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="max-w-2xl mx-auto px-6 py-3 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => setView({ name: "dashboard" })}
-            className="font-semibold text-slate-900"
-          >
-            NK Travel Agent
-          </button>
-          <nav className="flex items-center gap-4 text-sm">
-            <button type="button" onClick={() => setView({ name: "dashboard" })} className="text-slate-600">
-              Trips
-            </button>
-            <button type="button" onClick={() => setView({ name: "profile" })} className="text-slate-600">
-              Profile
-            </button>
-            <button type="button" onClick={() => setView({ name: "backup" })} className="text-slate-600">
-              Backup
-            </button>
-          </nav>
-        </div>
-      </header>
-
-      <main>
+    <AppShell view={view} onNavigate={setView}>
         {view.name === "dashboard" && <Dashboard onNavigate={setView} />}
         {view.name === "trip-new" && <TripForm onNavigate={setView} />}
         {view.name === "trip-edit" && <TripForm key={view.tripId} tripId={view.tripId} onNavigate={setView} />}
@@ -115,16 +92,15 @@ export default function App() {
         )}
         {view.name === "profile" && <ProfileForm onNavigate={setView} />}
         {view.name === "backup" && <BackupRestore onNavigate={setView} />}
-      </main>
-    </div>
+    </AppShell>
   );
 }
 
 function CenteredMessage({ children }: { children: ReactNode }) {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-900">
-      <div className="max-w-md w-full px-6 py-8 rounded-lg border border-slate-200 bg-white shadow-sm">
-        <h1 className="text-xl font-semibold mb-2">NK Travel Agent</h1>
+    <main className="min-h-screen flex items-center justify-center bg-navy-bg text-ink">
+      <div className="max-w-md w-full px-6 py-8 rounded-card border border-navy-border bg-navy-surface shadow-card">
+        <h1 className="text-xl font-semibold mb-2 text-ink">NK Travel Agent</h1>
         {children}
       </div>
     </main>

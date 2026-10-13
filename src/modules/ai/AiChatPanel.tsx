@@ -235,16 +235,16 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
   }
 
   if (loadState === "loading") {
-    return <div className="max-w-2xl w-full mx-auto px-6 py-8 text-slate-500 text-sm">Loading…</div>;
+    return <div className="max-w-2xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8 text-ink-muted text-sm">Loading…</div>;
   }
   if (loadState === "not-found") {
     return (
-      <div className="max-w-2xl w-full mx-auto px-6 py-8">
-        <p className="text-slate-700 mb-3">That trip no longer exists.</p>
+      <div className="max-w-2xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-ink mb-3">That trip no longer exists.</p>
         <button
           type="button"
           onClick={() => onNavigate({ name: "dashboard" })}
-          className="text-sm font-medium text-slate-900 underline"
+          className="text-sm font-medium text-accent underline"
         >
           Back to dashboard
         </button>
@@ -253,24 +253,24 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
   }
   if (loadState === "error" || !trip) {
     return (
-      <div className="max-w-2xl w-full mx-auto px-6 py-8">
-        <p className="text-red-700 text-sm">Couldn't load this trip: {loadError}</p>
+      <div className="max-w-2xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-danger-text text-sm">Couldn't load this trip: {loadError}</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl w-full mx-auto px-6 py-8">
+    <div className="max-w-2xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
       <button
         type="button"
         onClick={() => onNavigate({ name: "trip-details", tripId })}
-        className="text-sm text-slate-500 underline mb-4"
+        className="text-sm text-ink-muted underline mb-4"
       >
         ← Back to {trip.name}
       </button>
 
-      <h1 className="text-xl font-semibold text-slate-900 mb-1">Ask NK AI</h1>
-      <p className="text-sm text-slate-500 mb-6">
+      <h1 className="text-xl font-semibold text-ink mb-1">NK Concierge</h1>
+      <p className="text-sm text-ink-muted mb-6">
         About <span className="font-medium">{trip.name}</span>. The AI can suggest changes to this trip or its
         preferences — it never saves anything on its own. Every suggestion shows up below for you to review and
         approve or reject.
@@ -278,13 +278,13 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
 
       <div className="space-y-4 mb-6">
         {messages.length === 0 ? (
-          <p className="text-sm text-slate-400 italic">No messages yet — ask about this trip below.</p>
+          <p className="text-sm text-ink-faint italic">No messages yet — ask about this trip below.</p>
         ) : null}
         {messages.map((m, i) => (
           <div key={i} className={m.role === "user" ? "text-right" : "text-left"}>
             <div
               className={`inline-block max-w-[85%] rounded-lg px-4 py-2 text-sm whitespace-pre-wrap text-left ${
-                m.role === "user" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-900"
+                m.role === "user" ? "bg-accent text-navy-bg" : "bg-navy-elevated text-ink"
               }`}
             >
               {m.content}
@@ -306,18 +306,18 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
       </div>
 
       {warnings.length > 0 ? (
-        <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <div className="mb-4 rounded-md border border-warning/40 bg-warning-bg px-3 py-2 text-xs text-warning-text">
           {warnings.map((w, i) => (
             <p key={i}>{w}</p>
           ))}
         </div>
       ) : null}
 
-      {sendError ? <p className="text-red-700 text-sm mb-4">{sendError}</p> : null}
+      {sendError ? <p className="text-danger-text text-sm mb-4">{sendError}</p> : null}
 
       <form onSubmit={handleSend} className="flex items-end gap-2">
         <textarea
-          className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900"
+          className="flex-1 rounded-lg border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 border-navy-border px-3 py-2 text-sm"
           rows={2}
           placeholder="Ask about this trip…"
           value={draft}
@@ -328,7 +328,7 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
           <button
             type="button"
             onClick={handleCancel}
-            className="px-4 py-2 rounded-md border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="px-4 py-2 rounded-md border border-navy-border text-sm font-medium text-ink hover:bg-navy-elevated"
           >
             Cancel
           </button>
@@ -336,7 +336,7 @@ export default function AiChatPanel({ tripId, onNavigate }: AiChatPanelProps) {
           <button
             type="submit"
             disabled={!draft.trim()}
-            className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-accent text-navy-bg text-sm font-medium hover:bg-accent-hover disabled:opacity-50"
           >
             Send
           </button>
@@ -358,12 +358,12 @@ function ProposalCard({
   const { proposal, status, preview, errorMessage } = entry;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm">
-      <p className="font-medium text-slate-900 mb-1">{proposalKindLabel(proposal.kind)}</p>
-      <p className="text-slate-600 mb-2">{proposal.rationale}</p>
+    <div className="rounded-lg border border-navy-border bg-navy-surface px-4 py-3 text-sm">
+      <p className="font-medium text-ink mb-1">{proposalKindLabel(proposal.kind)}</p>
+      <p className="text-ink-muted mb-2">{proposal.rationale}</p>
 
       {preview && preview.changes.length > 0 ? (
-        <ul className="mb-2 space-y-0.5 text-xs text-slate-700">
+        <ul className="mb-2 space-y-0.5 text-xs text-ink">
           {preview.changes.map((c) => (
             <li key={c.field}>
               <span className="font-medium">{c.field}:</span> {formatValue(c.from)} → {formatValue(c.to)}
@@ -372,18 +372,18 @@ function ProposalCard({
         </ul>
       ) : null}
 
-      {status === "checking" ? <p className="text-xs text-slate-400">Checking against the latest data…</p> : null}
+      {status === "checking" ? <p className="text-xs text-ink-faint">Checking against the latest data…</p> : null}
       {status === "stale" ? (
-        <p className="text-xs text-amber-700 mb-2">
+        <p className="text-xs text-warning-text mb-2">
           This has changed since the AI looked at it — ask again to get an up-to-date suggestion.
         </p>
       ) : null}
       {status === "not-found" ? (
-        <p className="text-xs text-amber-700 mb-2">This trip no longer exists.</p>
+        <p className="text-xs text-warning-text mb-2">This trip no longer exists.</p>
       ) : null}
-      {status === "applied" ? <p className="text-xs text-emerald-700">Applied.</p> : null}
-      {status === "rejected" ? <p className="text-xs text-slate-400">Rejected.</p> : null}
-      {status === "error" ? <p className="text-xs text-red-700 mb-2">{errorMessage ?? "Couldn't apply this."}</p> : null}
+      {status === "applied" ? <p className="text-xs text-success-text">Applied.</p> : null}
+      {status === "rejected" ? <p className="text-xs text-ink-faint">Rejected.</p> : null}
+      {status === "error" ? <p className="text-xs text-danger-text mb-2">{errorMessage ?? "Couldn't apply this."}</p> : null}
 
       {status === "ready" || status === "applying" ? (
         <div className="flex gap-2">
@@ -391,7 +391,7 @@ function ProposalCard({
             type="button"
             onClick={onApprove}
             disabled={status === "applying"}
-            className="px-3 py-1 rounded-md bg-slate-900 text-white text-xs font-medium hover:bg-slate-700 disabled:opacity-50"
+            className="px-3 py-1 rounded-md bg-accent text-navy-bg text-xs font-medium hover:bg-accent-hover disabled:opacity-50"
           >
             {status === "applying" ? "Applying…" : "Approve"}
           </button>
@@ -399,7 +399,7 @@ function ProposalCard({
             type="button"
             onClick={onReject}
             disabled={status === "applying"}
-            className="px-3 py-1 rounded-md border border-slate-300 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            className="px-3 py-1 rounded-md border border-navy-border text-xs font-medium text-ink hover:bg-navy-elevated"
           >
             Reject
           </button>

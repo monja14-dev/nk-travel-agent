@@ -3,6 +3,7 @@ import { getTrip } from "../../db/repositories/tripsRepo";
 import { listAccommodationResultsForTrip, deleteAccommodationResult } from "../../db/repositories/accommodationResultsRepo";
 import { getAvailableAccommodationAdapters } from "./adapters/registry";
 import { saveAccommodationResult } from "./saveResult";
+import { safeHttpUrl } from "../../lib/url";
 import { getDisplayVerificationStatus, VERIFICATION_LABELS } from "./verification";
 import type { AccommodationResult, Trip } from "../../db/schema";
 import type { View } from "../../navigation/types";
@@ -131,13 +132,13 @@ export default function AccommodationComparison({ tripId, onNavigate }: Accommod
   }
 
   if (loadState === "loading") {
-    return <div className="max-w-4xl w-full mx-auto px-6 py-8 text-slate-500 text-sm">Loading…</div>;
+    return <div className="max-w-4xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8 text-ink-muted text-sm">Loading…</div>;
   }
   if (loadState === "not-found") {
     return (
-      <div className="max-w-4xl w-full mx-auto px-6 py-8">
-        <p className="text-slate-700 mb-3">That trip no longer exists.</p>
-        <button type="button" onClick={() => onNavigate({ name: "dashboard" })} className="text-sm font-medium text-slate-900 underline">
+      <div className="max-w-4xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-ink mb-3">That trip no longer exists.</p>
+        <button type="button" onClick={() => onNavigate({ name: "dashboard" })} className="text-sm font-medium text-accent underline">
           Back to dashboard
         </button>
       </div>
@@ -145,34 +146,34 @@ export default function AccommodationComparison({ tripId, onNavigate }: Accommod
   }
   if (loadState === "error" || !trip) {
     return (
-      <div className="max-w-4xl w-full mx-auto px-6 py-8">
-        <p className="text-red-700 text-sm">Couldn't load this trip: {loadError}</p>
+      <div className="max-w-4xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-danger-text text-sm">Couldn't load this trip: {loadError}</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl w-full mx-auto px-6 py-8">
+    <div className="max-w-4xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
       <button
         type="button"
         onClick={() => onNavigate({ name: "trip-details", tripId })}
-        className="text-sm text-slate-500 underline mb-4"
+        className="text-sm text-ink-muted underline mb-4"
       >
         ← Back to {trip.name}
       </button>
 
-      <h1 className="text-xl font-semibold text-slate-900 mb-1">Accommodation Comparison</h1>
-      <p className="text-sm text-slate-500 mb-6">
+      <h1 className="text-xl font-semibold text-ink mb-1">Accommodation Comparison</h1>
+      <p className="text-sm text-ink-muted mb-6">
         Options found through research (your own, or discussed with NK AI) — never live prices looked up
         automatically. Every row shows where it came from and how fresh it is.
       </p>
 
       {results.length === 0 ? (
-        <p className="text-sm text-slate-400 italic mb-6">No options saved yet — add one below.</p>
+        <p className="text-sm text-ink-faint italic mb-6">No options saved yet — add one below.</p>
       ) : (
-        <div className="overflow-x-auto mb-8 rounded-lg border border-slate-200">
+        <div className="overflow-x-auto mb-8 rounded-lg border border-navy-border">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+            <thead className="bg-navy-elevated text-left text-xs uppercase tracking-wide text-ink-muted">
               <tr>
                 <Th>Name</Th>
                 <Th>Price/night</Th>
@@ -185,12 +186,12 @@ export default function AccommodationComparison({ tripId, onNavigate }: Accommod
                 <Th></Th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-navy-border">
               {results.map((r) => (
                 <tr key={r.id}>
                   <Td>
-                    <div className="font-medium text-slate-900">{r.name}</div>
-                    {r.propertyType ? <div className="text-xs text-slate-500">{r.propertyType}</div> : null}
+                    <div className="font-medium text-ink">{r.name}</div>
+                    {r.propertyType ? <div className="text-xs text-ink-muted">{r.propertyType}</div> : null}
                   </Td>
                   <Td>
                     {r.pricePerNight !== undefined ? `${r.pricePerNight} ${r.currency ?? ""}`.trim() : "Not available"}
@@ -213,7 +214,7 @@ export default function AccommodationComparison({ tripId, onNavigate }: Accommod
                   </Td>
                   <Td>{r.notes || ""}</Td>
                   <Td>
-                    <button type="button" onClick={() => handleDelete(r.id)} className="text-xs text-red-600 underline">
+                    <button type="button" onClick={() => handleDelete(r.id)} className="text-xs text-danger-text underline">
                       Remove
                     </button>
                   </Td>
@@ -224,19 +225,19 @@ export default function AccommodationComparison({ tripId, onNavigate }: Accommod
         </div>
       )}
 
-      <h2 className="text-sm font-semibold text-slate-900 mb-3">Add an accommodation option</h2>
+      <h2 className="text-sm font-semibold text-ink mb-3">Add an accommodation option</h2>
       {!adapter ? (
-        <p className="text-sm text-amber-700 mb-4">
+        <p className="text-sm text-warning-text mb-4">
           No research adapter is currently available — see docs/PHASE_LOG.md for why no live provider is wired up
           yet.
         </p>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
+        <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-navy-border bg-navy-surface p-5">
           <Field label="Name" error={fieldErrors.name}>
             <input className={inputClass(fieldErrors.name)} value={form.name} onChange={(e) => updateField("name", e.target.value)} />
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Property type (optional)" error={fieldErrors.propertyType}>
               <select
                 className={inputClass(fieldErrors.propertyType)}
@@ -260,7 +261,7 @@ export default function AccommodationComparison({ tripId, onNavigate }: Accommod
             <input className={inputClass(fieldErrors.mapUrl)} value={form.mapUrl} onChange={(e) => updateField("mapUrl", e.target.value)} />
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Price per night (optional — leave blank if unknown)" error={fieldErrors.pricePerNight}>
               <input
                 type="number"
@@ -274,7 +275,7 @@ export default function AccommodationComparison({ tripId, onNavigate }: Accommod
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Mandatory fee label (optional)">
               <input className={inputClass(undefined)} value={form.feeLabel} onChange={(e) => updateField("feeLabel", e.target.value)} placeholder="e.g. Environmental fee" />
             </Field>
@@ -292,7 +293,7 @@ export default function AccommodationComparison({ tripId, onNavigate }: Accommod
             <textarea className={inputClass(undefined)} rows={2} value={form.cancellationPolicy} onChange={(e) => updateField("cancellationPolicy", e.target.value)} />
           </Field>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-cols-3 gap-4">
             <Field label="Rating (optional)" error={fieldErrors.rating}>
               <input type="number" className={inputClass(fieldErrors.rating)} value={form.rating} onChange={(e) => updateField("rating", e.target.value)} />
             </Field>
@@ -308,7 +309,7 @@ export default function AccommodationComparison({ tripId, onNavigate }: Accommod
             <textarea className={inputClass(undefined)} rows={2} value={form.notes} onChange={(e) => updateField("notes", e.target.value)} />
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Source URL (optional)" error={fieldErrors["attribution.sourceUrl"]}>
               <input
                 className={inputClass(fieldErrors["attribution.sourceUrl"])}
@@ -325,12 +326,12 @@ export default function AccommodationComparison({ tripId, onNavigate }: Accommod
             </Field>
           </div>
 
-          {submitError ? <p className="text-red-700 text-sm">{submitError}</p> : null}
+          {submitError ? <p className="text-danger-text text-sm">{submitError}</p> : null}
 
           <button
             type="submit"
             disabled={submitting}
-            className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-accent text-navy-bg text-sm font-medium hover:bg-accent-hover disabled:opacity-50"
           >
             {submitting ? "Saving…" : "Save option"}
           </button>
@@ -342,25 +343,27 @@ export default function AccommodationComparison({ tripId, onNavigate }: Accommod
 
 function SourceCell({ attribution }: { attribution: AccommodationResult["attribution"] }) {
   const status = getDisplayVerificationStatus(attribution);
+  // Stored as free text: only real http(s) links become clickable.
+  const sourceHref = safeHttpUrl(attribution.sourceUrl);
   const badgeClass =
     status === "verified"
-      ? "bg-emerald-100 text-emerald-700"
+      ? "bg-success-bg text-success-text"
       : status === "estimate"
-        ? "bg-amber-100 text-amber-700"
+        ? "bg-warning-bg text-warning-text"
         : status === "stale"
-          ? "bg-orange-100 text-orange-700"
-          : "bg-slate-100 text-slate-500";
+          ? "bg-warning-bg text-warning-text"
+          : "bg-navy-elevated text-ink-muted";
   return (
     <div>
       <span className={`inline-block text-xs rounded px-1.5 py-0.5 ${badgeClass}`}>{VERIFICATION_LABELS[status]}</span>
-      {attribution.sourceUrl ? (
+      {sourceHref ? (
         <div className="mt-1">
-          <a href={attribution.sourceUrl} target="_blank" rel="noreferrer" className="text-xs text-slate-500 underline">
+          <a href={sourceHref} target="_blank" rel="noopener noreferrer" className="text-xs text-ink-muted underline">
             {attribution.sourceLabel}
           </a>
         </div>
       ) : (
-        <div className="mt-1 text-xs text-slate-400">{attribution.sourceLabel}</div>
+        <div className="mt-1 text-xs text-ink-faint">{attribution.sourceLabel}</div>
       )}
     </div>
   );
@@ -374,15 +377,15 @@ function Td({ children }: { children: ReactNode }) {
 }
 
 function inputClass(error: string | undefined): string {
-  return `w-full rounded-md border px-3 py-2 text-sm text-slate-900 ${error ? "border-red-400" : "border-slate-300"}`;
+  return `w-full rounded-lg border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-3 py-2 text-sm ${error ? "border-danger/60" : "border-navy-border"}`;
 }
 
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-sm font-medium text-slate-700 mb-1">{label}</span>
+      <span className="block text-sm font-medium text-ink mb-1">{label}</span>
       {children}
-      {error ? <span className="block text-xs text-red-600 mt-1">{error}</span> : null}
+      {error ? <span className="block text-xs text-danger-text mt-1">{error}</span> : null}
     </label>
   );
 }

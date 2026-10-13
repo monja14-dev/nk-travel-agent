@@ -67,12 +67,12 @@ export default function RemindersChecklist({ tripId, onNavigate }: { tripId: str
     await reload();
   }
 
-  if (loadState === "loading") return <div className="max-w-2xl w-full mx-auto px-6 py-8 text-slate-500 text-sm">Loading reminders…</div>;
+  if (loadState === "loading") return <div className="max-w-2xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8 text-ink-muted text-sm">Loading reminders…</div>;
   if (loadState === "not-found" || !trip) {
     return (
-      <div className="max-w-2xl w-full mx-auto px-6 py-8">
-        <p className="text-slate-700 mb-3">That trip no longer exists.</p>
-        <button type="button" onClick={() => onNavigate({ name: "dashboard" })} className="text-sm font-medium text-slate-900 underline">
+      <div className="max-w-2xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-ink mb-3">That trip no longer exists.</p>
+        <button type="button" onClick={() => onNavigate({ name: "dashboard" })} className="text-sm font-medium text-accent underline">
           Back to dashboard
         </button>
       </div>
@@ -80,8 +80,8 @@ export default function RemindersChecklist({ tripId, onNavigate }: { tripId: str
   }
   if (loadState === "error") {
     return (
-      <div className="max-w-2xl w-full mx-auto px-6 py-8">
-        <p className="text-red-700 text-sm">Couldn't load reminders: {loadError}</p>
+      <div className="max-w-2xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-danger-text text-sm">Couldn't load reminders: {loadError}</p>
       </div>
     );
   }
@@ -94,28 +94,28 @@ export default function RemindersChecklist({ tripId, onNavigate }: { tripId: str
   }
 
   return (
-    <div className="max-w-2xl w-full mx-auto px-6 py-8">
-      <button type="button" onClick={() => onNavigate({ name: "trip-details", tripId })} className="text-sm text-slate-500 underline mb-4">
+    <div className="max-w-2xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+      <button type="button" onClick={() => onNavigate({ name: "trip-details", tripId })} className="text-sm text-ink-muted underline mb-4">
         ← Back to {trip.name}
       </button>
-      <h1 className="text-xl font-semibold text-slate-900 mb-1">Reminders</h1>
-      <p className="text-sm text-slate-500 mb-6">Checklist items grouped by section — things to bring, book, or do.</p>
+      <h1 className="text-xl font-semibold text-ink mb-1">Reminders</h1>
+      <p className="text-sm text-ink-muted mb-6">Checklist items grouped by section — things to bring, book, or do.</p>
 
       {bySection.size === 0 ? (
-        <p className="text-sm text-slate-400 italic mb-6">No reminders yet.</p>
+        <p className="text-sm text-ink-faint italic mb-6">No reminders yet.</p>
       ) : (
         Array.from(bySection.entries()).map(([sectionName, items]) => (
           <div key={sectionName} className="mb-4">
-            <h2 className="text-sm font-semibold text-slate-700 mb-2">{sectionName}</h2>
-            <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+            <h2 className="text-sm font-semibold text-ink mb-2">{sectionName}</h2>
+            <div className="divide-y divide-navy-border rounded-lg border border-navy-border bg-navy-surface">
               {items.map((r) => (
                 <div key={r.id} className="flex items-center justify-between px-4 py-2 text-sm gap-2">
                   <label className="flex items-center gap-2 flex-1 cursor-pointer">
-                    <input type="checkbox" checked={r.checked} onChange={() => handleToggle(r)} />
-                    <span className={r.checked ? "line-through text-slate-400" : "text-slate-900"}>{r.label}</span>
-                    {r.remarks ? <span className="text-xs text-slate-400">({r.remarks})</span> : null}
+                    <input type="checkbox" checked={r.checked} onChange={() => handleToggle(r)} className="h-4 w-4 rounded border-navy-border accent-[#D5B67B]" aria-label={`Done: ${r.label}`} />
+                    <span className={r.checked ? "line-through text-ink-faint" : "text-ink"}>{r.label}</span>
+                    {r.remarks ? <span className="text-xs text-ink-faint">({r.remarks})</span> : null}
                   </label>
-                  <button type="button" onClick={() => handleDelete(r.id)} className="text-xs font-medium text-red-700 underline shrink-0">
+                  <button type="button" onClick={() => handleDelete(r.id)} className="text-xs font-medium text-danger-text underline shrink-0">
                     Delete
                   </button>
                 </div>
@@ -125,30 +125,30 @@ export default function RemindersChecklist({ tripId, onNavigate }: { tripId: str
         ))
       )}
 
-      <div className="rounded-lg border border-slate-200 bg-white p-4 mt-6">
-        <h2 className="text-sm font-semibold text-slate-900 mb-3">Add a reminder</h2>
-        <div className="grid grid-cols-2 gap-2 mb-2">
+      <div className="rounded-lg border border-navy-border bg-navy-surface p-4 mt-6">
+        <h2 className="text-sm font-semibold text-ink mb-3">Add a reminder</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
           <label className="block">
-            <span className="block text-xs text-slate-500 mb-0.5">Section</span>
-            <input value={section} onChange={(e) => setSection(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" />
-            {fieldErrors.section ? <span className="text-xs text-red-700">{fieldErrors.section}</span> : null}
+            <span className="block text-xs text-ink-muted mb-0.5">Section</span>
+            <input value={section} onChange={(e) => setSection(e.target.value)} className="w-full rounded-lg border border-navy-border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-2.5 py-1.5 text-sm" />
+            {fieldErrors.section ? <span className="text-xs text-danger-text">{fieldErrors.section}</span> : null}
           </label>
           <label className="block">
-            <span className="block text-xs text-slate-500 mb-0.5">Label</span>
-            <input value={label} onChange={(e) => setLabel(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" />
-            {fieldErrors.label ? <span className="text-xs text-red-700">{fieldErrors.label}</span> : null}
+            <span className="block text-xs text-ink-muted mb-0.5">Label</span>
+            <input value={label} onChange={(e) => setLabel(e.target.value)} className="w-full rounded-lg border border-navy-border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-2.5 py-1.5 text-sm" />
+            {fieldErrors.label ? <span className="text-xs text-danger-text">{fieldErrors.label}</span> : null}
           </label>
-          <label className="block col-span-2">
-            <span className="block text-xs text-slate-500 mb-0.5">Remarks (optional)</span>
-            <input value={remarks} onChange={(e) => setRemarks(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" />
+          <label className="block sm:col-span-2">
+            <span className="block text-xs text-ink-muted mb-0.5">Remarks (optional)</span>
+            <input value={remarks} onChange={(e) => setRemarks(e.target.value)} className="w-full rounded-lg border border-navy-border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-2.5 py-1.5 text-sm" />
           </label>
         </div>
-        {fieldErrors._general ? <p className="text-xs text-red-700 mb-2">{fieldErrors._general}</p> : null}
+        {fieldErrors._general ? <p className="text-xs text-danger-text mb-2">{fieldErrors._general}</p> : null}
         <button
           type="button"
           onClick={handleAdd}
           disabled={saving || !section.trim() || !label.trim()}
-          className="px-3 py-1.5 rounded-md bg-slate-900 text-white text-xs font-medium hover:bg-slate-700 disabled:opacity-50"
+          className="px-3 py-1.5 rounded-md bg-accent text-navy-bg text-xs font-medium hover:bg-accent-hover disabled:opacity-50"
         >
           {saving ? "Saving…" : "Add reminder"}
         </button>

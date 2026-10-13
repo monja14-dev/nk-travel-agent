@@ -136,16 +136,16 @@ export default function TripForm({ tripId, onNavigate }: TripFormProps) {
   }
 
   if (loadState === "loading") {
-    return <div className="max-w-xl w-full mx-auto px-6 py-8 text-slate-500 text-sm">Loading trip…</div>;
+    return <div className="max-w-xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8 text-ink-muted text-sm">Loading trip…</div>;
   }
   if (loadState === "not-found") {
     return (
-      <div className="max-w-xl w-full mx-auto px-6 py-8">
-        <p className="text-slate-700 mb-3">That trip no longer exists.</p>
+      <div className="max-w-xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-ink mb-3">That trip no longer exists.</p>
         <button
           type="button"
           onClick={() => onNavigate({ name: "dashboard" })}
-          className="text-sm font-medium text-slate-900 underline"
+          className="text-sm font-medium text-accent underline"
         >
           Back to dashboard
         </button>
@@ -154,15 +154,15 @@ export default function TripForm({ tripId, onNavigate }: TripFormProps) {
   }
   if (loadState === "error") {
     return (
-      <div className="max-w-xl w-full mx-auto px-6 py-8">
-        <p className="text-red-700 text-sm">Couldn't load this trip: {loadError}</p>
+      <div className="max-w-xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-danger-text text-sm">Couldn't load this trip: {loadError}</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-xl w-full mx-auto px-6 py-8">
-      <h1 className="text-xl font-semibold text-slate-900 mb-6">{isEditing ? "Edit Trip" : "New Trip"}</h1>
+    <div className="max-w-xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+      <h1 className="text-xl font-semibold text-ink mb-6">{isEditing ? "Edit Trip" : "New Trip"}</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Field label="Trip name" error={fieldErrors.name}>
@@ -173,7 +173,7 @@ export default function TripForm({ tripId, onNavigate }: TripFormProps) {
           />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Destination" error={fieldErrors.destination}>
             <input
               className={inputClass(fieldErrors.destination)}
@@ -190,7 +190,7 @@ export default function TripForm({ tripId, onNavigate }: TripFormProps) {
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Start date" error={fieldErrors.startDate}>
             <input
               type="date"
@@ -209,7 +209,7 @@ export default function TripForm({ tripId, onNavigate }: TripFormProps) {
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Travelers" error={fieldErrors.travelerCount}>
             <input
               type="number"
@@ -239,13 +239,13 @@ export default function TripForm({ tripId, onNavigate }: TripFormProps) {
           />
         </Field>
 
-        {submitError ? <p className="text-red-700 text-sm">{submitError}</p> : null}
+        {submitError ? <p className="text-danger-text text-sm">{submitError}</p> : null}
 
         <div className="flex items-center gap-3 pt-2">
           <button
             type="submit"
             disabled={submitting}
-            className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-accent text-navy-bg text-sm font-medium hover:bg-accent-hover disabled:opacity-50"
           >
             {submitting ? "Saving…" : isEditing ? "Save changes" : "Create trip"}
           </button>
@@ -254,7 +254,7 @@ export default function TripForm({ tripId, onNavigate }: TripFormProps) {
             onClick={() =>
               onNavigate(tripId !== undefined ? { name: "trip-details", tripId } : { name: "dashboard" })
             }
-            className="text-sm text-slate-600 underline"
+            className="text-sm text-ink-muted underline"
           >
             Cancel
           </button>
@@ -265,8 +265,8 @@ export default function TripForm({ tripId, onNavigate }: TripFormProps) {
 }
 
 function inputClass(error: string | undefined): string {
-  return `w-full rounded-md border px-3 py-2 text-sm text-slate-900 ${
-    error ? "border-red-400" : "border-slate-300"
+  return `w-full rounded-lg border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-3 py-2 text-sm ${
+    error ? "border-danger/60" : "border-navy-border"
   }`;
 }
 
@@ -281,9 +281,9 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="block text-sm font-medium text-slate-700 mb-1">{label}</span>
+      <span className="block text-sm font-medium text-ink mb-1">{label}</span>
       {children}
-      {error ? <span className="block text-xs text-red-600 mt-1">{error}</span> : null}
+      {error ? <span className="block text-xs text-danger-text mt-1">{error}</span> : null}
     </label>
   );
 }

@@ -3,6 +3,7 @@ import { getTrip } from "../../db/repositories/tripsRepo";
 import { listFoodResultsForTrip, deleteFoodResult } from "../../db/repositories/foodResultsRepo";
 import { getAvailableFoodAdapters } from "./adapters/registry";
 import { saveFoodResult } from "./saveResult";
+import { safeHttpUrl } from "../../lib/url";
 import { getDisplayVerificationStatus, VERIFICATION_LABELS } from "./verification";
 import type { FoodResult, FoodHunterCategory, Trip } from "../../db/schema";
 import type { View } from "../../navigation/types";
@@ -134,13 +135,13 @@ export default function FoodHunter({ tripId, onNavigate }: FoodHunterProps) {
   }
 
   if (loadState === "loading") {
-    return <div className="max-w-3xl w-full mx-auto px-6 py-8 text-slate-500 text-sm">Loading…</div>;
+    return <div className="max-w-3xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8 text-ink-muted text-sm">Loading…</div>;
   }
   if (loadState === "not-found") {
     return (
-      <div className="max-w-3xl w-full mx-auto px-6 py-8">
-        <p className="text-slate-700 mb-3">That trip no longer exists.</p>
-        <button type="button" onClick={() => onNavigate({ name: "dashboard" })} className="text-sm font-medium text-slate-900 underline">
+      <div className="max-w-3xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-ink mb-3">That trip no longer exists.</p>
+        <button type="button" onClick={() => onNavigate({ name: "dashboard" })} className="text-sm font-medium text-accent underline">
           Back to dashboard
         </button>
       </div>
@@ -148,24 +149,24 @@ export default function FoodHunter({ tripId, onNavigate }: FoodHunterProps) {
   }
   if (loadState === "error" || !trip) {
     return (
-      <div className="max-w-3xl w-full mx-auto px-6 py-8">
-        <p className="text-red-700 text-sm">Couldn't load this trip: {loadError}</p>
+      <div className="max-w-3xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <p className="text-danger-text text-sm">Couldn't load this trip: {loadError}</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl w-full mx-auto px-6 py-8">
+    <div className="max-w-3xl w-full mx-auto px-4 py-6 sm:px-6 sm:py-8">
       <button
         type="button"
         onClick={() => onNavigate({ name: "trip-details", tripId })}
-        className="text-sm text-slate-500 underline mb-4"
+        className="text-sm text-ink-muted underline mb-4"
       >
         ← Back to {trip.name}
       </button>
 
-      <h1 className="text-xl font-semibold text-slate-900 mb-1">Food Hunter</h1>
-      <p className="text-sm text-slate-500 mb-6">
+      <h1 className="text-xl font-semibold text-ink mb-1">Food Hunter</h1>
+      <p className="text-sm text-ink-muted mb-6">
         Organized the way the couple profile already describes food research — must-try, local favorites, hidden
         gems, budget eats, and special occasions. Never a live price or a claim NK AI didn't actually find.
       </p>
@@ -175,32 +176,32 @@ export default function FoodHunter({ tripId, onNavigate }: FoodHunterProps) {
           const items = results.filter((r) => r.category === category);
           return (
             <section key={category}>
-              <h2 className="text-sm font-semibold text-slate-900 mb-3">{CATEGORY_LABELS[category]}</h2>
+              <h2 className="text-sm font-semibold text-ink mb-3">{CATEGORY_LABELS[category]}</h2>
               {items.length === 0 ? (
-                <p className="text-sm text-slate-400 italic">No finds yet in this category.</p>
+                <p className="text-sm text-ink-faint italic">No finds yet in this category.</p>
               ) : (
                 <div className="space-y-3">
                   {items.map((r) => (
-                    <div key={r.id} className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm">
+                    <div key={r.id} className="rounded-lg border border-navy-border bg-navy-surface px-4 py-3 text-sm">
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="font-medium text-slate-900">{r.name}</p>
-                          {r.cuisine ? <p className="text-xs text-slate-500">{r.cuisine}</p> : null}
+                          <p className="font-medium text-ink">{r.name}</p>
+                          {r.cuisine ? <p className="text-xs text-ink-muted">{r.cuisine}</p> : null}
                         </div>
-                        <button type="button" onClick={() => handleDelete(r.id)} className="text-xs text-red-600 underline">
+                        <button type="button" onClick={() => handleDelete(r.id)} className="text-xs text-danger-text underline">
                           Remove
                         </button>
                       </div>
-                      <p className="text-xs text-slate-600 mt-1">
+                      <p className="text-xs text-ink-muted mt-1">
                         {r.dishes.length > 0 ? r.dishes.join(", ") : "No specific dishes noted yet"}
                       </p>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-ink-muted mt-1">
                         {r.priceRange || "Price not available"}
                         {r.location ? ` · ${r.location}` : ""}
                         {r.rating !== undefined ? ` · ${r.rating}/${r.ratingScale ?? "?"}` : ""}
                         {r.reviewCount !== undefined ? ` (${r.reviewCount} reviews)` : ""}
                       </p>
-                      {r.notes ? <p className="text-xs text-slate-600 mt-1">{r.notes}</p> : null}
+                      {r.notes ? <p className="text-xs text-ink-muted mt-1">{r.notes}</p> : null}
                       <div className="mt-2">
                         <SourceBadge attribution={r.attribution} />
                       </div>
@@ -213,12 +214,12 @@ export default function FoodHunter({ tripId, onNavigate }: FoodHunterProps) {
         })}
       </div>
 
-      <h2 className="text-sm font-semibold text-slate-900 mb-3">Add a food find</h2>
+      <h2 className="text-sm font-semibold text-ink mb-3">Add a food find</h2>
       {!adapter ? (
-        <p className="text-sm text-amber-700 mb-4">No research adapter is currently available.</p>
+        <p className="text-sm text-warning-text mb-4">No research adapter is currently available.</p>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-navy-border bg-navy-surface p-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Name" error={fieldErrors.name}>
               <input className={inputClass(fieldErrors.name)} value={form.name} onChange={(e) => updateField("name", e.target.value)} />
             </Field>
@@ -241,7 +242,7 @@ export default function FoodHunter({ tripId, onNavigate }: FoodHunterProps) {
             <input className={inputClass(fieldErrors.dishes)} value={form.dishes} onChange={(e) => updateField("dishes", e.target.value)} />
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Cuisine (optional)">
               <input className={inputClass(undefined)} value={form.cuisine} onChange={(e) => updateField("cuisine", e.target.value)} />
             </Field>
@@ -255,7 +256,7 @@ export default function FoodHunter({ tripId, onNavigate }: FoodHunterProps) {
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Location (optional)">
               <input className={inputClass(undefined)} value={form.location} onChange={(e) => updateField("location", e.target.value)} />
             </Field>
@@ -264,7 +265,7 @@ export default function FoodHunter({ tripId, onNavigate }: FoodHunterProps) {
             </Field>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-cols-3 gap-4">
             <Field label="Rating (optional)" error={fieldErrors.rating}>
               <input type="number" className={inputClass(fieldErrors.rating)} value={form.rating} onChange={(e) => updateField("rating", e.target.value)} />
             </Field>
@@ -280,7 +281,7 @@ export default function FoodHunter({ tripId, onNavigate }: FoodHunterProps) {
             <textarea className={inputClass(undefined)} rows={2} value={form.notes} onChange={(e) => updateField("notes", e.target.value)} />
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Source URL (optional)" error={fieldErrors["attribution.sourceUrl"]}>
               <input
                 className={inputClass(fieldErrors["attribution.sourceUrl"])}
@@ -297,12 +298,12 @@ export default function FoodHunter({ tripId, onNavigate }: FoodHunterProps) {
             </Field>
           </div>
 
-          {submitError ? <p className="text-red-700 text-sm">{submitError}</p> : null}
+          {submitError ? <p className="text-danger-text text-sm">{submitError}</p> : null}
 
           <button
             type="submit"
             disabled={submitting}
-            className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-accent text-navy-bg text-sm font-medium hover:bg-accent-hover disabled:opacity-50"
           >
             {submitting ? "Saving…" : "Save find"}
           </button>
@@ -314,21 +315,23 @@ export default function FoodHunter({ tripId, onNavigate }: FoodHunterProps) {
 
 function SourceBadge({ attribution }: { attribution: FoodResult["attribution"] }) {
   const status = getDisplayVerificationStatus(attribution);
+  // Stored as free text: only real http(s) links become clickable.
+  const sourceHref = safeHttpUrl(attribution.sourceUrl);
   const badgeClass =
     status === "verified"
-      ? "bg-emerald-100 text-emerald-700"
+      ? "bg-success-bg text-success-text"
       : status === "estimate"
-        ? "bg-amber-100 text-amber-700"
+        ? "bg-warning-bg text-warning-text"
         : status === "stale"
-          ? "bg-orange-100 text-orange-700"
-          : "bg-slate-100 text-slate-500";
+          ? "bg-warning-bg text-warning-text"
+          : "bg-navy-elevated text-ink-muted";
   return (
     <span className={`inline-block text-xs rounded px-1.5 py-0.5 ${badgeClass}`}>
       {VERIFICATION_LABELS[status]}
-      {attribution.sourceUrl ? (
+      {sourceHref ? (
         <>
           {" · "}
-          <a href={attribution.sourceUrl} target="_blank" rel="noreferrer" className="underline">
+          <a href={sourceHref} target="_blank" rel="noopener noreferrer" className="underline">
             {attribution.sourceLabel}
           </a>
         </>
@@ -340,15 +343,15 @@ function SourceBadge({ attribution }: { attribution: FoodResult["attribution"] }
 }
 
 function inputClass(error: string | undefined): string {
-  return `w-full rounded-md border px-3 py-2 text-sm text-slate-900 ${error ? "border-red-400" : "border-slate-300"}`;
+  return `w-full rounded-lg border bg-navy-bg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 px-3 py-2 text-sm ${error ? "border-danger/60" : "border-navy-border"}`;
 }
 
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-sm font-medium text-slate-700 mb-1">{label}</span>
+      <span className="block text-sm font-medium text-ink mb-1">{label}</span>
       {children}
-      {error ? <span className="block text-xs text-red-600 mt-1">{error}</span> : null}
+      {error ? <span className="block text-xs text-danger-text mt-1">{error}</span> : null}
     </label>
   );
 }
