@@ -1,7 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { View } from "../../navigation/types";
 import { GLOBAL_NAV, SETTINGS_NAV, tripScopedNav, type NavItem } from "./navItems";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, CompassIcon } from "./icons";
+import { TipBubble, useTooltip } from "../dock/Tooltip";
+import { useMagnify } from "../dock/useMagnify";
+
+/** Sidebar icons swell less than the dock's: a row is ~36px tall and sits
+ * next to its label, so a restrained 1.28× with a ~90px falloff. */
+const SIDEBAR_MAX_SCALE = 1.28;
+const SIDEBAR_RANGE_PX = 90;
 
 /**
  * Phase 7 (UI): collapsible left sidebar (desktop) that becomes a
@@ -93,6 +100,7 @@ function SidebarInner({
   showBrand = true,
 }: SidebarProps & { showBrand?: boolean }) {
   const tripItems = activeTripId ? tripScopedNav(activeTripId) : [];
+  const { containerProps } = useMagnify({ axis: "y", maxScale: SIDEBAR_MAX_SCALE, range: SIDEBAR_RANGE_PX });
 
   return (
     <div className="flex h-full flex-col">
@@ -110,7 +118,7 @@ function SidebarInner({
         </div>
       )}
 
-      <nav aria-label="Main" className="flex-1 overflow-y-auto px-2 py-3 space-y-5">
+      <nav aria-label="Main" className="flex-1 overflow-y-auto px-2 py-3 space-y-5" {...containerProps}>
         <NavGroup items={GLOBAL_NAV} view={view} onNavigate={onNavigate} collapsed={collapsed} />
 
         <div>
@@ -172,35 +180,76 @@ function NavGroup({
         <p className="px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{label}</p>
       )}
       <ul className="space-y-0.5">
-        {items.map((item) => {
-          const active = isActive(view, item.view);
-          const Icon = item.icon;
-          return (
-            <li key={item.label}>
-              <button
-                type="button"
-                onClick={() => onNavigate(item.view)}
-                title={collapsed ? item.label : undefined}
-                aria-label={collapsed ? item.label : undefined}
-                aria-current={active ? "page" : undefined}
-                className={[
-                  "w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors text-left",
-                  collapsed && "justify-center",
-                  active
-                    ? "bg-accent/15 text-accent"
-                    : "text-ink-muted hover:bg-navy-elevated hover:text-ink",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              >
-                <Icon width={18} height={18} className="shrink-0" />
-                {!collapsed && <span className="truncate">{item.label}</span>}
-              </button>
-            </li>
-          );
-        })}
+        {items.map((item) => (
+          <NavButton
+            key={item.label}
+            item={item}
+            active={isActive(view, item.view)}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          />
+        ))}
       </ul>
     </div>
+  );
+}
+
+function NavButton({
+  item,
+  active,
+  collapsed,
+  onNavigate,
+}: {
+  item: NavItem;
+  active: boolean;
+  collapsed: boolean;
+  onNavigate: (view: View) => void;
+}) {
+  const Icon = item.icon;
+  const ref = useRef<HTMLButtonElement>(null);
+  const { id, open, handlers } = useTooltip();
+  // The label only needs a tooltip when the rail is collapsed. It is placed
+  // with position: fixed from the button's rect because the nav scrolls
+  // (overflow) and would otherwise clip a tooltip drawn beside the rail.
+  const rect = collapsed && open ? ref.current?.getBoundingClientRect() : undefined;
+
+  return (
+    <li>
+      <button
+        ref={ref}
+        type="button"
+        onClick={() => onNavigate(item.view)}
+        aria-label={collapsed ? item.label : undefined}
+        aria-current={active ? "page" : undefined}
+        aria-describedby={collapsed && open ? id : undefined}
+        className={[
+          "relative w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors text-left",
+          collapsed && "justify-center",
+          active
+            ? // Active route: gold tint, gold text, plus a slim gold bar on the left edge.
+              "bg-accent/15 text-accent before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-accent"
+            : "text-ink-muted hover:bg-navy-elevated hover:text-ink",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        {...(collapsed ? handlers : {})}
+      >
+        <span data-magnify className="inline-flex shrink-0 will-change-transform">
+          <Icon width={18} height={18} />
+        </span>
+        {!collapsed && <span className="truncate">{item.label}</span>}
+      </button>
+      {rect && (
+        <TipBubble
+          id={id}
+          open
+          className=""
+          style={{ position: "fixed", left: rect.right + 10, top: rect.top + rect.height / 2, transform: "translateY(-50%)" }}
+        >
+          {item.label}
+        </TipBubble>
+      )}
+    </li>
   );
 }
 

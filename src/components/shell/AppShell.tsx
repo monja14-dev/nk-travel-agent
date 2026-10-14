@@ -4,7 +4,7 @@ import type { Trip } from "../../db/schema";
 import type { View } from "../../navigation/types";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
-import { ConciergeButton } from "./ConciergeButton";
+import { QuickDock } from "../dock/QuickDock";
 import { tripIdFromView } from "./navItems";
 
 /** Views whose screens have been fully restyled onto the navy tokens.
@@ -52,6 +52,10 @@ export function AppShell({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeTrip, setActiveTrip] = useState<Trip | null>(null);
+  // The last trip opened this session (in memory only — nothing is saved).
+  // The bottom dock keeps acting on it after a visit to the Dashboard, so
+  // "Itinerary Studio" etc. don't go dead the moment you leave a trip.
+  const [lastTripId, setLastTripId] = useState<string | null>(null);
 
   const activeTripId = tripIdFromView(view);
 
@@ -81,6 +85,31 @@ export function AppShell({
     // keeps the top bar / sidebar label from going stale after an edit.
   }, [activeTripId, view.name]);
 
+  // Remember the trip while one is open…
+  useEffect(() => {
+    if (activeTripId) setLastTripId(activeTripId);
+  }, [activeTripId]);
+
+  // …and, once outside a trip, forget it if that trip has since been
+  // deleted, so the dock never points at a trip that no longer exists.
+  useEffect(() => {
+    if (activeTripId || !lastTripId) return;
+    let cancelled = false;
+    getTrip(lastTripId)
+      .then((trip) => {
+        if (!cancelled && !trip) setLastTripId(null);
+      })
+      .catch(() => {
+        // A failed read just leaves the dock as it was; the screen it opens
+        // reports its own load errors.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTripId, lastTripId, view.name]);
+
+  const dockTripId = activeTripId ?? lastTripId;
+
   return (
     <div className="flex h-screen overflow-hidden bg-navy-bg text-ink">
       <a
@@ -100,7 +129,7 @@ export function AppShell({
         activeTripId={activeTripId}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative flex min-w-0 flex-1 flex-col">
         <TopBar
           onOpenMobileMenu={() => setMobileOpen(true)}
           activeTrip={activeTrip ? { name: activeTrip.name, status: activeTrip.status } : null}
@@ -120,9 +149,10 @@ export function AppShell({
           id="main-content"
           tabIndex={-1}
           className={[
-            // pb-20: clearance so the floating concierge button never
-            // covers the last controls on a page.
-            "flex-1 overflow-y-auto pb-20 focus:outline-none",
+            // pb-28 (112px): the quick dock floats over the bottom of this
+            // area (~72px incl. its margin), so the last row of any form,
+            // table or card can always scroll up clear of it.
+            "flex-1 overflow-y-auto pb-28 focus:outline-none",
             MIGRATED_VIEWS.has(view.name)
               ? "bg-navy-bg text-ink"
               : "bg-slate-50 text-slate-900 [color-scheme:light]",
@@ -130,11 +160,10 @@ export function AppShell({
         >
           {children}
         </main>
+
+        <QuickDock view={view} onNavigate={onNavigate} tripId={dockTripId} hidden={mobileOpen} />
       </div>
 
-      {activeTripId && view.name !== "trip-ai" && (
-        <ConciergeButton onClick={() => onNavigate({ name: "trip-ai", tripId: activeTripId })} />
-      )}
     </div>
   );
 }
